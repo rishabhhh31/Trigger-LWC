@@ -1,0 +1,12 @@
+<template>
+    <lightning-card title="All Account List">
+        <lightning-datatable hide-checkbox-column show-row-number-column columns={columns} data={accounts}
+            key-field="Id"></lightning-datatable>
+        <div class="slds-var-m-around_small">
+            <lightning-button variant="brand" class="slds-var-m-around_xx-small" disabled={hasPreviousPage}
+                label="Previous" name="previous" onclick={handleListChange}></lightning-button>
+            <lightning-button variant="brand-outline" class="slds-var-m-around_xx-small" disabled={hasNextPage}
+                label="Next" name="next" onclick={handleListChange}></lightning-button>
+        </div>
+    </lightning-card>
+</template>
