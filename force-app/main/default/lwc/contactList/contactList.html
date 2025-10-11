@@ -1,0 +1,12 @@
+<template>
+    <lightning-card title="All Contact List with Search">
+        <div class="slds-var-m-around_small">
+            <lightning-input is-loading={isLoading} placeholder="Search contacts" variant="label-hidden" type="search"
+                label="Search" onchange={handleSearch}></lightning-input>
+        </div>
+        <div style="height: 200px;">
+            <lightning-datatable hide-checkbox-column columns={columns} data={filteredContacts}
+                key-field="Id"></lightning-datatable>
+        </div>
+    </lightning-card>
+</template>
