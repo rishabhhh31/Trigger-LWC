@@ -1,0 +1,61 @@
+<template>
+  <div class="slds-grid slds-gutters slds-var-p-around_medium slds-grid_vertical-align-center">
+    <div class="slds-col slds-size_2-of-3">
+      <lightning-input lwc:ref="train" message-when-pattern-mismatch="train number must be a number" pattern="^\d+$"
+        variant="label-hidden" label="Enter Train Number" placeholder="Enter Train Number" onchange={handleChange}>
+      </lightning-input>
+    </div>
+    <div class="slds-col slds-size_1-of-3">
+      <lightning-button label="Check Train Status" onclick={checkStatus} variant="brand">
+      </lightning-button>
+    </div>
+  </div>
+
+  <lightning-spinner if:true={isLoading} alternative-text="Loading" size="small"></lightning-spinner>
+
+  <template if:true={stops.length}>
+    <div class="container">
+      <div class="header">
+        <h1 class="title"> {trainName}: <span class="train-name"><lightning-formatted-rich-text
+              value={trainStatusMessage}></lightning-formatted-rich-text></span> </h1>
+      </div>
+      <div class="table-wrapper">
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Station</th>
+              <th>Distance (km)</th>
+              <th>Platform</th>
+              <th>Day</th>
+              <th>Date</th>
+              <th>Arr (Sched)</th>
+              <th>Arr (Actual)</th>
+              <th>Dep (Sched)</th>
+              <th>Dep (Actual)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template for:each={stops} for:item="stop">
+              <tr key={stop.stationCode}>
+                <td class={stop.stationClass}>{stop.stationName}</td>
+                <td>{stop.distance}</td>
+                <td>{stop.platform}</td>
+                <td>{stop.day}</td>
+                <td class="nowrap">{stop.expectedArrivalDate}</td>
+                <td class="muted" lwc:dom="manual"></td>
+                <td class="actual">{stop.actualArrivalTime}</td>
+                <td class="muted" lwc:dom="manual"></td>
+                <td class="actual">{stop.actualDepartureTime}</td>
+                <td class="status-cell">
+                  <span class={stop.statusDot}></span>
+                  <span class={stop.statusClass}>{stop.runningStatus}</span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+</template>
