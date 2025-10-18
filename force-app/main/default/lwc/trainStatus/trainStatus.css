@@ -1,0 +1,172 @@
+:host {
+  display: block;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f9fafb;
+  padding: 24px;
+  color: #1e293b;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 24px 32px;
+}
+
+.header {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.train-name {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* Table container */
+.table-wrapper {
+  max-height: 460px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+/* Custom Scrollbar */
+.table-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* Table Styling */
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 950px;
+}
+
+.status-table th {
+  background: #f1f5f9;
+  color: #334155;
+  text-align: left;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.status-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.status-table tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.status-table tr:hover {
+  background: #f1f5f9;
+}
+
+/* Text styles */
+.station {
+  font-weight: 600;
+  color: #111827;
+}
+
+.station.start {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.muted {
+  color: #9ca3af;
+}
+
+.actual {
+  font-weight: 600;
+}
+
+/* Status indicator styling */
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.green {
+  background-color: #16a34a;
+}
+
+.status-dot.red {
+  background-color: #dc2626;
+}
+
+.status-dot.yellow {
+  background-color: #facc15;
+}
+
+.status-dot.neutral {
+  background-color: #9ca3af;
+}
+
+.status-text {
+  font-weight: 600;
+}
+
+.status-text.on-time {
+  color: #16a34a;
+}
+
+.status-text.delayed {
+  color: #dc2626;
+}
+
+.status-text.early {
+  color: #ca8a04;
+}
+
+/* Responsive tweak */
+@media (max-width: 1024px) {
+  .container {
+    padding: 16px;
+  }
+
+  .status-table {
+    font-size: 13px;
+    min-width: 850px;
+  }
+}
