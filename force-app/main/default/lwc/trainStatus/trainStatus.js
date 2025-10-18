@@ -2,119 +2,165 @@ import { LightningElement, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getTrainLiveStatus from '@salesforce/apex/TrainStatusController.getTrainLiveStatus';
 import { publish, MessageContext } from 'lightning/messageService';
-import mapLocations from '@salesforce/messageChannel/stationLocationChannel__c';
+import mapLocationsChannel from '@salesforce/messageChannel/stationLocationChannel__c';
 
+/**
+ * @description LWC to display live train running status and publish
+ * station locations to other components via Lightning Message Service.
+ */
 export default class TrainStatus extends LightningElement {
-    @track stops = [];
-    trainStatusMessage;
-    isLoading = false;
-    trainNumber;
-    trainName;
-    @track mapMarkers = [];
+    @track stationsList = []; // List of processed station data for display
+    @track mapMarkers = [];   // Station map markers for map component
 
-    handleChange(event) {
-        this.trainNumber = event.target.value;
-    }
+    trainStatusMessage;       // Message showing train’s running status (e.g., "On time", "Delayed by 10 min")
+    isLoading = false;        // Spinner toggle during API calls
+    trainNumber;              // User-entered train number
+    trainName;                // Train name fetched from Apex response
 
     @wire(MessageContext)
     messageContext;
 
-    checkStatus() {
-        this.mapMarkers = [];
-        this.getLiveRunningStatuses();
+
+    /**
+     * @description Captures user input for the train number.
+     */
+    handleTrainNumberChange(event) {
+        this.trainNumber = event.target.value;
     }
 
-    async getLiveRunningStatuses() {
+    /**
+     * @description Called when user clicks "Check Status".
+     * Clears previous data and fetches fresh train status.
+     */
+    handleCheckStatus() {
+        this.mapMarkers = [];
+        this.fetchTrainStatus();
+    }
+
+    /**
+     * @description Fetches live train running status from Apex.
+     */
+    async fetchTrainStatus() {
         if (!this.trainNumber) {
             this.showToast('Error', 'Please enter a train number', 'error');
             return;
         }
 
         this.isLoading = true;
-        this.stops = [];
+        this.stationsList = [];
         this.trainStatusMessage = '';
 
         try {
-            let response = await getTrainLiveStatus({
-                trainNumber: this.trainNumber,
-                departureDate: null
+            // Call Apex method to get train live status
+            const response = await getTrainLiveStatus({
+                trainNumber: this.trainNumber
             });
 
-            console.log(response);
+            console.log('Train Live Status Response:', response);
+
             if (response && response.code === 200) {
-                let { stations, current_station, train_status_message, train_name } = response.body;
-                this.trainStatusMessage = train_status_message;;
+                const { stations, current_station, train_status_message, train_name } = response.body;
+
+                // Update high-level properties
+                this.trainStatusMessage = train_status_message;
                 this.trainName = train_name;
 
-                this.stops = stations.map((station) => {
-                    let status = this.compareTimesWithDate(
-                        station.actual_arrival_date,
-                        station.arrivalTime,
-                        station.actual_arrival_time
-                    );
-
-                    let runningStatus;
-                    let statusClass = 'status-text';
-                    let statusDot = 'status-dot neutral';
-
-                    if (status.comparison.includes('right')) {
-                        runningStatus = 'On Time';
-                        statusClass = 'status-text on-time';
-                        statusDot = 'status-dot green';
-                    } else if (status.comparison.includes('delay')) {
-                        runningStatus = `${status.difference} late`;
-                        statusClass = 'status-text delayed';
-                        statusDot = 'status-dot red';
-                    } else if (status.comparison.includes('early')) {
-                        runningStatus = `${status.difference} early`;
-                        statusClass = 'status-text early';
-                        statusDot = 'status-dot yellow';
-                    }
-
-                    let stationName = station.stationName.replace(/\s*Jn\b/, '').trim();
-
-                    let obj = {};
-                    obj.location = {};
-                    obj.location.Street = stationName + " Railway Station";
-                    obj.location.Country = 'India';
-                    obj.value = station.stationCode;
-
-                    obj.title = stationName + " Railway Station";
-                    this.mapMarkers = [...this.mapMarkers, obj];
-                    publish(this.messageContext, mapLocations, { locations: this.mapMarkers, trainNumber: this.trainNumber });
-
-                    return {
-                        stationCode: station.stationCode,
-                        stationName: station.stationName,
-                        distance: station.distance,
-                        platform: station.expected_platform,
-                        day: station.dayCount,
-                        statusClass,
-                        statusDot,
-                        runningStatus,
-                        expectedArrivalTime: station.arrivalTime,
-                        expectedDepartureTime: station.departureTime,
-                        expectedArrivalDate: this.dateFormat(station.actual_arrival_date),
-                        expectedDepartureDate: this.dateFormat(station.actual_departure_date),
-                        actualArrivalTime: station.actual_arrival_time,
-                        actualDepartureTime: station.actual_departure_time,
-                        // isCurrentStation: station.stationCode === current_station,
-                        stationClass: station.stationCode === current_station ? 'station start' : 'station',
-                        arrHtml: this.formatTime(station.arrivalTime),
-                        depHtml: this.formatTime(station.departureTime)
-                    };
-                });
+                // Transform stations array into UI-friendly objects
+                this.processStationsData(stations, current_station);
             } else {
-                this.showToast('Error', response.error, 'error');
+                this.showToast('Error', response?.error || 'Unable to fetch train data', 'error');
             }
         } catch (error) {
-            console.error(error);
-            this.showToast('Error', 'Something went wrong while fetching data', 'error');
+            console.error('Error fetching live train status:', error);
+            this.showToast('Error', 'An error occurred while fetching train status', 'error');
         } finally {
-            this.isLoading = false; // stop spinner
+            this.isLoading = false; // Always stop the loading spinner
         }
     }
 
+    /**
+     * @description Transforms API station data into formatted objects for display and mapping.
+     */
+    processStationsData(stations, currentStationCode) {
+        this.mapMarkers = []; // reset markers
+        const processedStations = [];
+
+        stations.forEach((station) => {
+            const timingStatus = this.compareScheduledAndActualTimes(
+                station.actual_arrival_date,
+                station.arrivalTime,
+                station.actual_arrival_time
+            );
+
+            // Determine visual state based on timing comparison
+            let runningStatusText = 'N/A';
+            let statusTextClass = 'status-text';
+            let statusDotClass = 'status-dot neutral';
+
+            switch (timingStatus.comparison) {
+                case 'right':
+                    runningStatusText = 'On Time';
+                    statusTextClass = 'status-text on-time';
+                    statusDotClass = 'status-dot green';
+                    break;
+                case 'delay':
+                    runningStatusText = `${timingStatus.difference} late`;
+                    statusTextClass = 'status-text delayed';
+                    statusDotClass = 'status-dot red';
+                    break;
+                case 'early':
+                    runningStatusText = `${timingStatus.difference} early`;
+                    statusTextClass = 'status-text early';
+                    statusDotClass = 'status-dot yellow';
+                    break;
+            }
+
+            // Create map marker
+            const cleanedStationName = station.stationName.replace(/\s*Jn\b/, '').trim();
+            const mapMarker = {
+                location: {
+                    Street: `${cleanedStationName} Railway Station`,
+                    Country: 'India'
+                },
+                value: station.stationCode,
+                title: `${cleanedStationName} Railway Station`
+            };
+            this.mapMarkers.push(mapMarker);
+
+            // Publish to message channel for other components (e.g., map)
+            publish(this.messageContext, mapLocationsChannel, {
+                locations: this.mapMarkers,
+                trainNumber: this.trainNumber
+            });
+
+            // Add formatted station object to display list
+            processedStations.push({
+                stationCode: station.stationCode,
+                stationName: station.stationName,
+                distance: station.distance,
+                platform: station.expected_platform,
+                dayCount: station.dayCount,
+                runningStatus: runningStatusText,
+                statusTextClass,
+                statusDotClass,
+                expectedArrivalTime: station.arrivalTime,
+                expectedDepartureTime: station.departureTime,
+                formattedArrivalDate: this.formatDate(station.actual_arrival_date),
+                formattedDepartureDate: this.formatDate(station.actual_departure_date),
+                actualArrivalTime: station.actual_arrival_time,
+                actualDepartureTime: station.actual_departure_time,
+                stationCssClass: station.stationCode === currentStationCode ? 'station start' : 'station',
+                arrivalHtml: this.formatTimeWithStrike(station.arrivalTime),
+                departureHtml: this.formatTimeWithStrike(station.departureTime)
+            });
+        });
+
+        this.stationsList = processedStations;
+    }
+
+    /**
+     * @description Displays toast messages to the user.
+     */
     showToast(title, message, variant) {
         this.dispatchEvent(
             new ShowToastEvent({
@@ -125,31 +171,30 @@ export default class TrainStatus extends LightningElement {
         );
     }
 
-    dateFormat(dateStr) {
-        const year = dateStr.slice(0, 4);
-        const month = dateStr.slice(4, 6);
-        const day = dateStr.slice(6, 8);
-
-        const months = [
-            "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-            "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
-        ];
-
+    /**
+     * @description Converts date string from YYYYMMDD to DD-MMM format.
+     */
+    formatDate(dateString) {
+        if (!dateString) return '';
+        const month = dateString.slice(4, 6);
+        const day = dateString.slice(6, 8);
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const monthName = months[parseInt(month, 10) - 1];
         return `${day}-${monthName}`;
     }
 
-    compareTimesWithDate(dateStr, scheduledTime, actualTime) {
-        // Parse date parts
-        const year = dateStr.slice(0, 4);
-        const month = dateStr.slice(4, 6);
-        const day = dateStr.slice(6, 8);
+    /**
+     * @description Compares scheduled vs. actual arrival/departure times and determines delay/early status.
+     */
+    compareScheduledAndActualTimes(dateString, scheduledTime, actualTime) {
+        const year = dateString.slice(0, 4);
+        const month = dateString.slice(4, 6);
+        const day = dateString.slice(6, 8);
 
-        // Create Date objects
         const scheduledDate = new Date(`${year}-${month}-${day}T${scheduledTime}`);
         let actualDate = new Date(`${year}-${month}-${day}T${actualTime}`);
 
-        // Check if actual time is past midnight (next day)
+        // Adjust for midnight crossover (if actual time after midnight)
         if (actualDate < scheduledDate) {
             const diffHours = (scheduledDate - actualDate) / (1000 * 60 * 60);
             if (diffHours > 12) {
@@ -157,42 +202,39 @@ export default class TrainStatus extends LightningElement {
             }
         }
 
-        // Determine comparison
-        let comparison;
-        if (scheduledDate.getTime() === actualDate.getTime()) {
-            comparison = "right";
-        } else if (scheduledDate.getTime() < actualDate.getTime()) {
-            comparison = "delay";
-        } else {
-            comparison = "early";
+        let comparison = 'right';
+        if (scheduledDate.getTime() < actualDate.getTime()) {
+            comparison = 'delay';
+        } else if (scheduledDate.getTime() > actualDate.getTime()) {
+            comparison = 'early';
         }
 
-        // Calculate difference
         const diffMs = Math.abs(actualDate - scheduledDate);
         const diffMinutesTotal = Math.floor(diffMs / (1000 * 60));
         const hours = Math.floor(diffMinutesTotal / 60);
         const minutes = diffMinutesTotal % 60;
+        const diffReadable = `${hours > 0 ? hours + 'hr ' : ''}${minutes}min`;
 
-        // Human-readable string
-        const diffString = `${hours > 0 ? hours + 'hr ' : ''}${minutes}min`;
-
-        return {
-            comparison,
-            difference: diffString  // e.g., "1hr 5min"
-        };
+        return { comparison, difference: diffReadable };
     }
 
+    /**
+     * @description Formats a time string by striking it through (for styling).
+     */
+    formatTimeWithStrike(timeValue) {
+        return `<s>${timeValue}</s>`;
+    }
+
+    /**
+     * @description Runs after every DOM render. Injects formatted HTML for arrival/departure times.
+     */
     renderedCallback() {
-        const rows = this.template.querySelectorAll('tbody tr');
-        this.stops.forEach((stop, index) => {
-            const arrCell = rows[index].querySelectorAll('td.muted')[0];
-            const depCell = rows[index].querySelectorAll('td.muted')[1];
-            if (arrCell) arrCell.innerHTML = stop.arrHtml;
-            if (depCell) depCell.innerHTML = stop.depHtml;
+        const tableRows = this.template.querySelectorAll('tbody tr');
+        this.stationsList.forEach((station, index) => {
+            const arrivalCell = tableRows[index]?.querySelectorAll('td.muted')[0];
+            const departureCell = tableRows[index]?.querySelectorAll('td.muted')[1];
+            if (arrivalCell) arrivalCell.innerHTML = station.arrivalHtml;
+            if (departureCell) departureCell.innerHTML = station.departureHtml;
         });
-    }
-
-    formatTime(value) {
-        return `<s>${value}</s>`;
     }
 }

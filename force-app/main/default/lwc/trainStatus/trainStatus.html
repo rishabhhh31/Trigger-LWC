@@ -2,18 +2,19 @@
   <div class="slds-grid slds-gutters slds-var-p-around_medium slds-grid_vertical-align-center">
     <div class="slds-col slds-size_2-of-3">
       <lightning-input lwc:ref="train" message-when-pattern-mismatch="train number must be a number" pattern="^\d+$"
-        variant="label-hidden" label="Enter Train Number" placeholder="Enter Train Number" onchange={handleChange}>
+        variant="label-hidden" label="Enter Train Number" placeholder="Enter Train Number"
+        onchange={handleTrainNumberChange}>
       </lightning-input>
     </div>
     <div class="slds-col slds-size_1-of-3">
-      <lightning-button label="Check Train Status" onclick={checkStatus} variant="brand">
+      <lightning-button label="Check Train Status" onclick={handleCheckStatus} variant="brand">
       </lightning-button>
     </div>
   </div>
 
   <lightning-spinner if:true={isLoading} alternative-text="Loading" size="small"></lightning-spinner>
 
-  <template if:true={stops.length}>
+  <template if:true={stationsList.length}>
     <div class="container">
       <div class="header">
         <h1 class="title"> {trainName}: <span class="train-name"><lightning-formatted-rich-text
@@ -36,20 +37,20 @@
             </tr>
           </thead>
           <tbody>
-            <template for:each={stops} for:item="stop">
-              <tr key={stop.stationCode}>
-                <td class={stop.stationClass}>{stop.stationName}</td>
-                <td>{stop.distance}</td>
-                <td>{stop.platform}</td>
-                <td>{stop.day}</td>
-                <td class="nowrap">{stop.expectedArrivalDate}</td>
+            <template for:each={stationsList} for:item="station">
+              <tr key={station.stationCode}>
+                <td class={station.stationCssClass}>{station.stationName}</td>
+                <td>{station.distance}</td>
+                <td>{station.platform}</td>
+                <td>{station.dayCount}</td>
+                <td class="nowrap">{station.formattedArrivalDate}</td>
                 <td class="muted" lwc:dom="manual"></td>
-                <td class="actual">{stop.actualArrivalTime}</td>
+                <td class="actual">{station.actualArrivalTime}</td>
                 <td class="muted" lwc:dom="manual"></td>
-                <td class="actual">{stop.actualDepartureTime}</td>
+                <td class="actual">{station.actualDepartureTime}</td>
                 <td class="status-cell">
-                  <span class={stop.statusDot}></span>
-                  <span class={stop.statusClass}>{stop.runningStatus}</span>
+                  <span class={station.statusDotClass}></span>
+                  <span class={station.statusTextClass}>{station.runningStatus}</span>
                 </td>
               </tr>
             </template>
