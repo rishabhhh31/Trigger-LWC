@@ -1,14 +1,24 @@
 <template>
-  <div class="slds-grid slds-gutters slds-var-p-around_medium slds-grid_vertical-align-center">
-    <div class="slds-col slds-size_2-of-3">
+  <div class="slds-grid slds-wrap slds-grid_vertical-align-center">
+    <div class="slds-col slds-size_8-of-12">
       <lightning-input lwc:ref="train" message-when-pattern-mismatch="train number must be a number" pattern="^\d+$"
         variant="label-hidden" label="Enter Train Number" placeholder="Enter Train Number"
         onchange={handleTrainNumberChange}>
       </lightning-input>
     </div>
-    <div class="slds-col slds-size_1-of-3">
-      <lightning-button label="Check Train Status" onclick={handleCheckStatus} variant="brand">
-      </lightning-button>
+    <div class="slds-col slds-size_4-of-12">
+      <div class="slds-grid slds-wrap slds-var-p-around_small slds-grid_vertical-align-center">
+        <div class="slds-col slds-size_8-of-12">
+          <lightning-button disabled={isTrainNumberValid} label="Check Train Status" onclick={handleCheckStatus}
+            variant="brand">
+          </lightning-button>
+        </div>
+        <div class="slds-col slds-size_2-of-12">
+          <lightning-button-icon disabled={isTrainNumberValid} tooltip="Refresh" variant="inverse"
+            label="Check Train Status" onclick={handleCheckStatus} click={handleCheckStatus} icon-name="action:refresh">
+          </lightning-button-icon>
+        </div>
+      </div>
     </div>
   </div>
 

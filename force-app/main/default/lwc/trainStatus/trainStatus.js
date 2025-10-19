@@ -20,6 +20,10 @@ export default class TrainStatus extends LightningElement {
     @wire(MessageContext)
     messageContext;
 
+    get isTrainNumberValid() {
+        return !(this.trainNumber && /^\d+$/.test(this.trainNumber));
+    }
+
 
     /**
      * @description Captures user input for the train number.
