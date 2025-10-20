@@ -1,4 +1,36 @@
 public class ContactTriggerHandler {
+    public static void duplicateContactEmailCheck(List<Contact> newContacts, Map<Id, Contact> oldContacts) {
+        Set<String> contactEmails = new Set<String>();
+
+        // Collect emails that need to be checked for duplicates
+        for (Contact c : newContacts) {
+            String newEmail = c.Email;
+            String oldEmail = (oldContacts != null && oldContacts.containsKey(c.Id)) ? oldContacts.get(c.Id).Email : null;
+
+            // Only check when email is newly added or changed
+            if (newEmail != null && (oldEmail == null || !newEmail.equalsIgnoreCase(oldEmail))) {
+                contactEmails.add(newEmail.trim());
+            } else if (newEmail == null) {
+                c.addError('Email is required to check duplicate contacts.');
+            }
+        }
+
+        if (contactEmails.isEmpty()) return;
+
+        // Query existing contacts with same email
+        Map<String, Id> existingEmails = new Map<String, Id>();
+        for (Contact existing : [ SELECT Id, Email FROM Contact WHERE Email IN :contactEmails AND Email != null ]) {
+            existingEmails.put(existing.Email.toLowerCase(), existing.Id);
+        }
+
+        // Add error if duplicate found
+        for (Contact c : newContacts) {
+            if (c.Email != null && existingEmails.containsKey(c.Email.toLowerCase())) {
+                c.Email.addError('Duplicate email contact found.');
+            }
+        }
+    }
+
     // Rolls up total contact count to related Accounts
     public static void updateAccountContactCounts(List<Contact> newContacts, Map<Id, Contact> oldContacts) {
         Set<Id> accountIds = new Set<Id>();
