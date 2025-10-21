@@ -3,6 +3,7 @@
     <classAccesses>
         <apexClass>TrainStatusController</apexClass>
         <apexClass>OpportunityTriggerHandler</apexClass>
+        <apexClass>AccountTriggerHandler</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <custom>false</custom>
@@ -11,6 +12,14 @@
         <field>OpportunityLineItem.Status__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Account.Account_Auto_Number__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <layoutAssignments>
+        <layout>Account-Account Layout</layout>
+    </layoutAssignments>
     <userLicense>Salesforce</userLicense>
     <userPermissions>
         <enabled>true</enabled>
