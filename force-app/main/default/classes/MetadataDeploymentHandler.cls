@@ -102,104 +102,139 @@ public with sharing class MetadataDeploymentHandler {
         // }
 	}
 
-    public static void createExternalAuthProvider(){
+    public static void createExternalAuthProvider(String label, String fullName, String endpoint) {
         MetadataService.MetadataPort service = createService();
+
+        // Create the External Auth Identity Provider
         MetadataService.ExternalAuthIdentityProvider authProvider = new MetadataService.ExternalAuthIdentityProvider();
-        authProvider.fullName = 'Salesforce_B';
-        authProvider.label = 'Salesforce B';
+        authProvider.fullName = fullName;
+        authProvider.label = label;
         authProvider.authenticationFlow = 'ClientCredentials';
         authProvider.authenticationProtocol = 'OAuth';
 
-        List<MetadataService.ExternalAuthIdentityProviderParameter> parameters = new List<MetadataService.ExternalAuthIdentityProviderParameter>();
-        MetadataService.ExternalAuthIdentityProviderParameter parameter = new MetadataService.ExternalAuthIdentityProviderParameter();
-        parameter.parameterName = 'ClientAuthentication';
-        parameter.parameterType = 'ClientAuthentication';
-        parameter.parameterValue = 'ClientSecretBasic';
-        parameters.add(parameter);
-        
-        MetadataService.ExternalAuthIdentityProviderParameter tokenParameter = new MetadataService.ExternalAuthIdentityProviderParameter();
-        tokenParameter.parameterName = 'TokenUrl';
-        tokenParameter.parameterType = 'TokenUrl';
-        tokenParameter.parameterValue = 'https://test.salesforce.com/services/oauth2/token';
-        parameters.add(tokenParameter);
+        // Prepare the parameters list
+        List<MetadataService.ExternalAuthIdentityProviderParameter> authParameters = new List<MetadataService.ExternalAuthIdentityProviderParameter>();
 
-        authProvider.externalAuthIdentityProviderParameters = parameters; 
+        // Client Authentication parameter
+        MetadataService.ExternalAuthIdentityProviderParameter clientAuthParam = new MetadataService.ExternalAuthIdentityProviderParameter();
+        clientAuthParam.parameterName = 'ClientAuthentication';
+        clientAuthParam.parameterType = 'ClientAuthentication';
+        clientAuthParam.parameterValue = 'ClientSecretBasic';
+        authParameters.add(clientAuthParam);
+
+        // Token URL parameter (dynamic based on environment)
+        MetadataService.ExternalAuthIdentityProviderParameter tokenUrlParam = new MetadataService.ExternalAuthIdentityProviderParameter();
+        tokenUrlParam.parameterName = 'TokenUrl';
+        tokenUrlParam.parameterType = 'TokenUrl';
+        tokenUrlParam.parameterValue = endpoint + '/services/oauth2/token';
+        authParameters.add(tokenUrlParam);
+
+        // Assign parameters to the provider
+        authProvider.externalAuthIdentityProviderParameters = authParameters; 
+
+        // Create the provider metadata
         MetadataService.SaveResult[] result = service.createMetadata(new List<MetadataService.Metadata>{authProvider});
-        if(result[0].success){
-            createExternalCredentials();
+
+        // Check result and throw custom error if unsuccessful
+        if (result == null || result.isEmpty() || !result[0].success) {
+            String errorMessage = 'Failed to create External Auth Provider';
+            if (result != null && result.size() > 0 && result[0].errors != null && result[0].errors.size() > 0) {
+                errorMessage += ': ' + result[0].errors[0].message;
+            }
+            throw new MetadataOperationException(errorMessage);
         }
+
+        createExternalCredentials(label, fullName, endpoint);
     }
 
-    public static void createExternalCredentials() {
+    public static void createExternalCredentials(String label, String fullName, String endpoint) {
         MetadataService.MetadataPort service = createService();
+
+        // Create External Credential
         MetadataService.ExternalCredential externalCredential = new MetadataService.ExternalCredential();
-        externalCredential.fullName = 'Salesforce_B';
-        externalCredential.label = 'Salesforce_B';
+        externalCredential.fullName = fullName;
+        externalCredential.label = label;
         externalCredential.authenticationProtocol = 'Oauth';
-        externalCredential.description = 'External Credential for connecting Salesforce B via OAuth';
+        externalCredential.description = 'External Credential for connecting ' + label + ' via OAuth';
         externalCredential.externalCredentialParameters = new List<MetadataService.ExternalCredentialParameter>();
+
+        // ExternalAuthIdentityProvider parameter
         MetadataService.ExternalCredentialParameter extAuthIdpParam = new MetadataService.ExternalCredentialParameter();
-        extAuthIdpParam.externalAuthIdentityProvider = 'Salesforce_B';
+        extAuthIdpParam.externalAuthIdentityProvider = fullName;
         extAuthIdpParam.parameterGroup = 'DefaultGroup';
         extAuthIdpParam.parameterName = 'ExternalAuthIdentityProvider';
         extAuthIdpParam.parameterType = 'ExternalAuthIdentityProvider';
 
+        // PerUserPrincipal parameter
         MetadataService.ExternalCredentialParameter perUserPrincipalParam = new MetadataService.ExternalCredentialParameter();
-        perUserPrincipalParam.parameterName = 'SalesforceB';
-        perUserPrincipalParam.parameterGroup = 'SalesforceB';
+        perUserPrincipalParam.parameterName = label.replaceAll('\\s',''); // remove spaces
+        perUserPrincipalParam.parameterGroup = perUserPrincipalParam.parameterName;
         perUserPrincipalParam.parameterType = 'PerUserPrincipal';
         perUserPrincipalParam.sequenceNumber = 1;
 
+        // Add parameters to the external credential
         externalCredential.externalCredentialParameters.add(extAuthIdpParam);
         externalCredential.externalCredentialParameters.add(perUserPrincipalParam);
 
+        // Create metadata
         MetadataService.SaveResult[] results = service.createMetadata(
             new List<MetadataService.Metadata>{ (MetadataService.Metadata) externalCredential }
         );
-        System.debug(JSON.serialize(results));
-        if (results != null && results.size() > 0) {
-            System.debug('Success: ' + results[0].success);
-            if(results[0].success){
-                createNamedCredential();
+
+        // Check results and throw custom exception if creation fails
+        if (results == null || results.isEmpty() || !results[0].success) {
+            String errorMessage = 'Failed to create External Credential';
+            if (results != null && results.size() > 0 && results[0].errors != null && results[0].errors.size() > 0) {
+                errorMessage += ': ' + results[0].errors[0].message;
             }
-            if (results[0].errors != null) {
-                for (MetadataService.Error err : results[0].errors) {
-                    System.debug('Error: ' + err.message);
-                }
-            }
+            throw new MetadataOperationException(errorMessage);
         }
+        // Call next step
+        createNamedCredential(label, fullName, endpoint);
     }
 
-    public static void createNamedCredential() {
+    public static void createNamedCredential(String label, String fullName, String endpoint) {
         MetadataService.MetadataPort service = createService();
+        // Create Named Credential
         MetadataService.NamedCredential namedCredential = new MetadataService.NamedCredential();
-        namedCredential.fullName = 'Salesforce_NC';
-        namedCredential.label = 'Salesforce NC';
+        namedCredential.fullName = fullName;
+        namedCredential.label = label;
         namedCredential.allowMergeFieldsInHeader = false;
         namedCredential.allowMergeFieldsInBody = false;
         namedCredential.calloutStatus = 'Enabled';
         namedCredential.namedCredentialType = 'SecuredEndpoint';
         namedCredential.namedCredentialParameters = new List<MetadataService.NamedCredentialParameter>();
-        MetadataService.NamedCredentialParameter parameter1 = new MetadataService.NamedCredentialParameter();
-        parameter1.parameterType = 'Authentication';
-        parameter1.externalCredential = 'Salesforce_B';
-        parameter1.parameterName = 'ExternalCredential';
-        namedCredential.namedCredentialParameters.add(parameter1);
-        MetadataService.NamedCredentialParameter parameter2 = new MetadataService.NamedCredentialParameter();
-        parameter2.parameterType = 'Url';
-        parameter2.parameterValue = 'https://wise-panda-wauvar-dev-ed.trailblaze.my.salesforce.com';
-        parameter2.parameterName = 'Url';
-        namedCredential.namedCredentialParameters.add(parameter2);
+
+        // External Credential parameter
+        MetadataService.NamedCredentialParameter authParam = new MetadataService.NamedCredentialParameter();
+        authParam.parameterType = 'Authentication';
+        authParam.externalCredential = fullName;
+        authParam.parameterName = 'ExternalCredential';
+        namedCredential.namedCredentialParameters.add(authParam);
+
+        // URL parameter
+        MetadataService.NamedCredentialParameter urlParam = new MetadataService.NamedCredentialParameter();
+        urlParam.parameterType = 'Url';
+        urlParam.parameterValue = endpoint;
+        urlParam.parameterName = 'Url';
+        namedCredential.namedCredentialParameters.add(urlParam);
+
+        // Deploy Named Credential
         MetadataService.SaveResult[] results = service.createMetadata(
             new List<MetadataService.Metadata>{ (MetadataService.Metadata) namedCredential }
         );
-        if (results != null && results.size() > 0) {
-            System.debug('Success: ' + results[0].success);
-            if (results[0].errors != null) {
-                for (MetadataService.Error err : results[0].errors) {
-                    System.debug('Error: ' + err.message);
-                }
+        // Handle errors and throw custom exception if not successful
+        if (results == null || results.isEmpty() || !results[0].success) {
+            String errorMessage = 'Failed to create Named Credential: ' + fullName;
+            if (results != null && results.size() > 0 && results[0].errors != null && results[0].errors.size() > 0) {
+                errorMessage += ' - ' + results[0].errors[0].message;
             }
+            throw new MetadataOperationException(errorMessage);
         }
+
+        System.debug('Named Credential created successfully: ' + fullName);
     }
+
+    // Custom exception class
+    public class MetadataOperationException extends Exception {}
 }
