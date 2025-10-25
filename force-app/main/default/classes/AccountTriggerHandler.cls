@@ -19,10 +19,7 @@ public class AccountTriggerHandler {
 
 		// Query to find the most recent Account number for this year
         // NOTE: LIMIT 1 with DESC order gives us the latest number
-		List<Account> accountLastNumbers = [SELECT Id, Account_Auto_Number__c FROM Account
-											WHERE Account_Auto_Number__c LIKE: accNumberStr
-											ORDER BY Account_Auto_Number__c DESC LIMIT 1
-											];
+		List<Account> accountLastNumbers = [SELECT Id, Account_Auto_Number__c FROM Account WHERE Account_Auto_Number__c LIKE: accNumberStr ORDER BY Account_Auto_Number__c DESC LIMIT 1];
 
 		// If there’s already an account with this year’s prefix, extract its last number
 		if(!accountLastNumbers.isEmpty()){
@@ -37,7 +34,7 @@ public class AccountTriggerHandler {
 			// Set the formatted Account Number
 			String paddedNumber = 'ACC-'+currentYear+'-'+String.valueOf(nextNumber).leftPad(4,'0');
 			acc.Account_Auto_Number__c = paddedNumber;
-
+			
 			// Increment for next Account record in the same transaction
 			nextNumber++;
 		}
