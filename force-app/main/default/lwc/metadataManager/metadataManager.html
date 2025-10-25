@@ -1,30 +1,45 @@
 <template>
-    <lightning-card>
-        <lightning-layout horizontal-align="space">
-            <lightning-layout-item flexibility="auto" size="5" padding="around-small">
-                <lightning-combobox name="source" label="Source Org" value={selectedSource}
-                    placeholder="select source org" options={sourceOrgs} onchange={handleOrgChange}>
+    <lightning-card title="Salesforce Metadata Manager">
+        <lightning-spinner if:true={isLoading} size="medium"></lightning-spinner>
+        <lightning-layout horizontal-align="spread">
+            <lightning-layout-item size="6" padding="around-small">
+                <lightning-combobox label="Source Org" value={selectedSource} options={sourceOrgs}
+                    placeholder="Select source org" onchange={handleOrgChange} name="source">
                 </lightning-combobox>
             </lightning-layout-item>
-            <lightning-layout-item flexibility="auto" size="5" padding="around-small">
-                <lightning-combobox name="target" label="Target Org" value={selectedTarget}
-                    placeholder="select target org" options={targetOrgs} disabled={isTargetOrgDisabled}
-                    onchange={handleOrgChange}>
+            <lightning-layout-item size="6" padding="around-small">
+                <lightning-combobox label="Target Org" value={selectedTarget} options={targetOrgs}
+                    placeholder="Select target org" onchange={handleOrgChange} name="target"
+                    disabled={isTargetOrgDisabled}>
                 </lightning-combobox>
             </lightning-layout-item>
         </lightning-layout>
 
-        <lightning-button label="Next" onclick={handleNext}></lightning-button>
-        <!-- Metadata Multi-Select -->
-        <lightning-dual-listbox lwc:if={isMetadataTypeAvailable} name="metadata" label="Select Metadata Types"
-            source-label="Available" selected-label="Selected" field-level-help="Select one or more metadata types"
-            options={metadataOptions} value={selectedMetadata} onchange={handleMetadataChange}>
-        </lightning-dual-listbox>
-        <lightning-button disabled={shouldFetchMetadata} variant="brand" label="Fetch Metadata"
-            onclick={handleFetchMetadata}></lightning-button>
-        <lightning-datatable onrowselection={handleRowSelection} key-field="fullName" data={fetchedFiles}
-            columns={columns}>
-        </lightning-datatable>
-        <lightning-button variant="brand" label="Deploy" onclick={deployMetadata}></lightning-button>
+        <lightning-button variant="brand" label="Previous" onclick={handlePrevious} class="slds-m-left_small"
+            disabled={previousButtonAvailable}></lightning-button>
+        <lightning-button variant="brand" label="Next" onclick={handleNext} class="slds-m-left_small"
+            disabled={nextButtonAvailable}></lightning-button>
+
+        <template if:true={isMetadataTypeAvailable}>
+            <lightning-dual-listbox class="slds-m-around_small" name="metadata" label="Select Metadata Types"
+                source-label="Available" selected-label="Selected" field-level-help="Select one or more metadata types"
+                options={metadataOptions} value={selectedMetadata} onchange={handleMetadataChange}>
+            </lightning-dual-listbox>
+
+            <lightning-button variant="brand" label="Fetch Metadata" onclick={handleFetchMetadata}
+                disabled={shouldFetchMetadata} class="slds-m-around_small"></lightning-button>
+
+            <div class="slds-m-around_small" lwc:if={isMetadataFilesAvailables}>
+                <div style="height: 250px;">
+                    <lightning-datatable data={fetchedFiles} columns={columns} key-field="fullName"
+                        onrowselection={handleRowSelection} class="slds-m-around_small">
+                    </lightning-datatable>
+                </div>
+                <div class="slds-m-around_small">
+                    <lightning-button variant="brand" label="Deploy Metadata"
+                        onclick={deployMetadata}></lightning-button>
+                </div>
+            </div>
+        </template>
     </lightning-card>
 </template>

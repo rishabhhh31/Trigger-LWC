@@ -5,39 +5,71 @@ import retrieveMetadataItem from '@salesforce/apex/MetadataDeploymentHandler.ret
 import getSalesforceAuthorizationOrgs from '@salesforce/apex/MetadataDeploymentHandler.getSalesforceAuthorizationOrgs';
 import handleClientCredentialsFlow from '@salesforce/apex/AuthService.handleClientCredentialsFlow';
 import getDeploymentStatus from '@salesforce/apex/CreateUpdateMetadataUtils.getDeploymentStatus';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class MetadataManager extends LightningElement {
-    @track label = '';
-    @track apiName = '';
-    @track environment = '';
+    // Selections
+    selectedSource = '';
+    selectedTarget = '';
     @track selectedMetadata = [];
+    @track selectedMetadataTypes = {};
     @track fetchedFiles = [];
 
-    selectedTarget = '';
-    selectedSource = '';
+    // Options
     @track sourceOrgs = [];
     @track targetOrgs = [];
+    @track metadataOptions = [];
 
-    selectedMetadataTypes = {};
-
-    columns = [
+    // UI state
+    @track isLoading = false;
+    @track columns = [
         { label: 'Full Name', fieldName: 'fullName', type: 'text' },
         { label: 'Type', fieldName: 'type', type: 'text' },
         { label: 'Created By', fieldName: 'createdByName', type: 'text' },
         { label: 'Last Modified By', fieldName: 'lastModifiedByName', type: 'text' },
     ];
 
-    metadataOptions = [];
+    // Lifecycle
+    connectedCallback() {
+        this.loadOrgs();
+    }
 
+    async loadOrgs() {
+        try {
+            const response = await getSalesforceAuthorizationOrgs();
+            this.sourceOrgs = response;
+            this.targetOrgs = response;
+        } catch (error) {
+            this.showToast('Error loading orgs', error?.body?.message || error.message, 'error');
+        }
+    }
+
+    get nextButtonAvailable() {
+        return !(this.selectedSource && this.selectedTarget);
+    }
+
+    // UI Getters
+    get isTargetOrgDisabled() {
+        return !this.selectedSource;
+    }
+
+    get isMetadataTypeAvailable() {
+        return this.metadataOptions.length > 0;
+    }
+
+    get shouldFetchMetadata() {
+        return this.selectedMetadata.length < 1;
+    }
+
+    // Event Handlers
     handleOrgChange(event) {
-        let { name } = event.target;
+        const { name, value } = event.target;
         if (name === 'source') {
-            this.selectedSource = event.target.value;
-            console.log(this.selectedSource);
-
+            this.selectedSource = value;
+            this.selectedTarget = null;
             this.filterTargetOrg();
         } else if (name === 'target') {
-            this.selectedTarget = event.target.value;
+            this.selectedTarget = value;
         }
     }
 
@@ -45,120 +77,111 @@ export default class MetadataManager extends LightningElement {
         this.targetOrgs = this.sourceOrgs.filter(org => org.value !== this.selectedSource);
     }
 
-    get isTargetOrgDisabled() {
-        return this.selectedSource == '';
-    }
-
-    connectedCallback() {
-        this.loadMetadata();
-    }
-
-    async loadMetadata() {
-        let response = await getSalesforceAuthorizationOrgs();
-        this.sourceOrgs = response;
-        this.targetOrgs = response;
-    }
-
-    handleNext() {
-        this.getOrgMetadata();
-    }
-
-    async getOrgMetadata() {
-        try {
-            let tokenResponse = await handleClientCredentialsFlow({ metadataId: this.selectedSource });
-            console.log(tokenResponse);
-            if (tokenResponse == 'Expired') {
-                console.log('Token Expired');
-                return;
-            }
-            if (tokenResponse == 'Valid') {
-                this.metadataOptions = await getOrgWideMetadataTypeNames({ sourceOrg: this.selectedSource });
-            } else {
-                const result = await this.pollDeploymentStatus(tokenResponse, 5000);
-                console.log(result);
-                if (result.success) {
-                    this.metadataOptions = await getOrgWideMetadataTypeNames({ sourceOrg: this.selectedSource });
-                    console.log(this.metadataOptions);
-                } else {
-                    console.log('Deployment Failed');
-                }
-            }
-        } catch (error) {
-            console.error('getOrgMetadata', error);
-        }
-    }
-
-    get isMetadataTypeAvailable() {
-        return this.metadataOptions.length > 0;
-    }
-
     handleMetadataChange(event) {
-        console.log(event.detail.value);
         this.selectedMetadata = event.detail.value;
     }
 
     handleRowSelection(event) {
-        let selectedRows = event.detail.selectedRows;
         const typeMap = {};
-        selectedRows.forEach(item => {
-            if (!typeMap[item.type]) {
-                typeMap[item.type] = [];
-            }
-            typeMap[item.type].push(item.fullName);
+        event.detail.selectedRows.forEach(row => {
+            if (!typeMap[row.type]) typeMap[row.type] = [];
+            typeMap[row.type].push(row.fullName);
         });
-        this.selectedMetadataTypes = { ...typeMap };
-        console.log(JSON.stringify(this.selectedMetadataTypes));
+        this.selectedMetadataTypes = typeMap;
     }
 
-    async pollDeploymentStatus(deploymentId, intervalMs) {
-        while (true) {
-            const status = await getDeploymentStatus({ deploymentId });
-
-            if (status?.done) {
-                return status;
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, intervalMs));
-        }
+    // Toast
+    showToast(title, message, variant = 'info') {
+        this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
 
-    async deployMetadata() {
+    // Metadata Fetching
+    async handleNext() {
+        await this.loadOrgMetadata(this.selectedSource);
+    }
+
+    // Metadata Fetching
+    async handlePrevious() {
+        this.metadataOptions = [];
+    }
+
+    async loadOrgMetadata(metadataId) {
         try {
-            let tokenResponse = await handleClientCredentialsFlow({ metadataId: this.selectedTarget });
-            console.log(tokenResponse);
-            if (tokenResponse == 'Expired') {
-                console.log('Token Expired');
+            this.isLoading = true;
+            const tokenResponse = await handleClientCredentialsFlow({ metadataId });
+
+            if (tokenResponse === 'Expired') {
+                this.showToast('Token Expired', 'Please refresh the token', 'warning');
                 return;
             }
-            if (tokenResponse == 'Valid') {
-                let response = await retrieveMetadataItem({ componentNamesMap: this.selectedMetadataTypes, sourceOrg: this.selectedSource, targetOrg: this.selectedTarget })
-                console.log('success');
+
+            if (tokenResponse === 'Valid') {
+                this.metadataOptions = await getOrgWideMetadataTypeNames({ sourceOrg: metadataId });
             } else {
-                const result = await this.pollDeploymentStatus(tokenResponse, 5000);
-                console.log(result);
+                const result = await this.pollDeploymentStatus(tokenResponse);
                 if (result.success) {
-                    let response = await retrieveMetadataItem({ componentNamesMap: this.selectedMetadataTypes, sourceOrg: this.selectedSource, targetOrg: this.selectedTarget })
-                    console.log(response);
-                    console.log('success');
+                    this.metadataOptions = await getOrgWideMetadataTypeNames({ sourceOrg: metadataId });
                 } else {
-                    console.log('Deployment Failed');
+                    this.showToast('Error', 'Deployment failed', 'error');
                 }
             }
         } catch (error) {
-            console.log(error);
+            this.showToast('Error', error?.body?.message || error.message, 'error');
+        } finally {
+            this.isLoading = false;
         }
     }
 
-    get shouldFetchMetadata() {
-        return this.selectedMetadata.length < 1;
+    get isMetadataFilesAvailables() {
+        return this.fetchedFiles.length > 0;
+    }
+
+    async pollDeploymentStatus(deploymentId, intervalMs = 5000) {
+        while (true) {
+            const status = await getDeploymentStatus({ deploymentId });
+            if (status?.done) return status;
+            await new Promise(res => setTimeout(res, intervalMs));
+        }
     }
 
     async handleFetchMetadata() {
         try {
-            this.fetchedFiles = await listMetadata({ metadataComponents: this.selectedMetadata, sourceOrg: this.selectedSource })
-            console.log(response);
+            this.fetchedFiles = await listMetadata({ metadataComponents: this.selectedMetadata, sourceOrg: this.selectedSource });
         } catch (error) {
-            console.log(error);
+            this.showToast('Error fetching metadata', error?.body?.message || error.message, 'error');
+        }
+    }
+
+    get previousButtonAvailable() {
+        return !(this.isMetadataTypeAvailable);
+    }
+
+    async deployMetadata() {
+        try {
+            this.isLoading = true;
+            const tokenResponse = await handleClientCredentialsFlow({ metadataId: this.selectedTarget });
+
+            if (tokenResponse === 'Expired') {
+                this.showToast('Token Expired', 'Cannot deploy, token expired', 'warning');
+                return;
+            }
+
+            if (tokenResponse === 'Valid') {
+                await retrieveMetadataItem({ componentNamesMap: this.selectedMetadataTypes, sourceOrg: this.selectedSource, targetOrg: this.selectedTarget });
+                this.showToast('Success', 'Metadata deployed successfully', 'success');
+            } else {
+                const result = await this.pollDeploymentStatus(tokenResponse);
+                if (result.success) {
+                    await retrieveMetadataItem({ componentNamesMap: this.selectedMetadataTypes, sourceOrg: this.selectedSource, targetOrg: this.selectedTarget });
+                    this.showToast('Success', 'Metadata deployed successfully', 'success');
+                } else {
+                    this.showToast('Deployment Failed', 'Deployment job failed', 'error');
+                }
+            }
+        } catch (error) {
+            this.showToast('Deployment Error', error?.body?.message || error.message, 'error');
+        } finally {
+            this.isLoading = false;
         }
     }
 }
