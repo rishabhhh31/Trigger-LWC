@@ -8,25 +8,45 @@ import getDeploymentStatus from '@salesforce/apex/CreateUpdateMetadataUtils.getD
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class MetadataManager extends LightningElement {
+<<<<<<< HEAD
     @track currentStep = 1;
 
+=======
+    // Selections
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     selectedSource = '';
     selectedTarget = '';
     @track selectedMetadata = [];
     @track selectedMetadataTypes = {};
     @track fetchedFiles = [];
+<<<<<<< HEAD
     @track sourceOrgs = [];
     @track targetOrgs = [];
     @track metadataOptions = [];
     @track isLoading = false;
 
     columns = [
+=======
+
+    // Options
+    @track sourceOrgs = [];
+    @track targetOrgs = [];
+    @track metadataOptions = [];
+
+    // UI state
+    @track isLoading = false;
+    @track columns = [
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
         { label: 'Full Name', fieldName: 'fullName', type: 'text' },
         { label: 'Type', fieldName: 'type', type: 'text' },
         { label: 'Created By', fieldName: 'createdByName', type: 'text' },
         { label: 'Last Modified By', fieldName: 'lastModifiedByName', type: 'text' },
     ];
 
+<<<<<<< HEAD
+=======
+    // Lifecycle
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     connectedCallback() {
         this.loadOrgs();
     }
@@ -41,6 +61,7 @@ export default class MetadataManager extends LightningElement {
         }
     }
 
+<<<<<<< HEAD
     // Step Navigation
     async handleNext() {
         if (this.currentStep === 1) {
@@ -89,18 +110,36 @@ export default class MetadataManager extends LightningElement {
         return this.currentStep === 3;
     }
 
+=======
+    get nextButtonAvailable() {
+        return !(this.selectedSource && this.selectedTarget);
+    }
+
+    // UI Getters
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     get isTargetOrgDisabled() {
         return !this.selectedSource;
     }
 
+<<<<<<< HEAD
+=======
+    get isMetadataTypeAvailable() {
+        return this.metadataOptions.length > 0;
+    }
+
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     get shouldFetchMetadata() {
         return this.selectedMetadata.length < 1;
     }
 
+<<<<<<< HEAD
     get isMetadataFilesAvailable() {
         return this.fetchedFiles.length > 0;
     }
 
+=======
+    // Event Handlers
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     handleOrgChange(event) {
         const { name, value } = event.target;
         if (name === 'source') {
@@ -129,10 +168,27 @@ export default class MetadataManager extends LightningElement {
         this.selectedMetadataTypes = typeMap;
     }
 
+<<<<<<< HEAD
+=======
+    // Toast
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     showToast(title, message, variant = 'info') {
         this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
 
+<<<<<<< HEAD
+=======
+    // Metadata Fetching
+    async handleNext() {
+        await this.loadOrgMetadata(this.selectedSource);
+    }
+
+    // Metadata Fetching
+    async handlePrevious() {
+        this.metadataOptions = [];
+    }
+
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     async loadOrgMetadata(metadataId) {
         try {
             this.isLoading = true;
@@ -160,6 +216,7 @@ export default class MetadataManager extends LightningElement {
         }
     }
 
+<<<<<<< HEAD
     async handleFetchMetadata() {
         try {
             this.isLoading = true;
@@ -183,6 +240,30 @@ export default class MetadataManager extends LightningElement {
 
     get isFileSelectedForDeployment() {
         return !(this.selectedMetadataTypes && Object.keys(this.selectedMetadataTypes).length > 0);
+=======
+    get isMetadataFilesAvailables() {
+        return this.fetchedFiles.length > 0;
+    }
+
+    async pollDeploymentStatus(deploymentId, intervalMs = 5000) {
+        while (true) {
+            const status = await getDeploymentStatus({ deploymentId });
+            if (status?.done) return status;
+            await new Promise(res => setTimeout(res, intervalMs));
+        }
+    }
+
+    async handleFetchMetadata() {
+        try {
+            this.fetchedFiles = await listMetadata({ metadataComponents: this.selectedMetadata, sourceOrg: this.selectedSource });
+        } catch (error) {
+            this.showToast('Error fetching metadata', error?.body?.message || error.message, 'error');
+        }
+    }
+
+    get previousButtonAvailable() {
+        return !(this.isMetadataTypeAvailable);
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
     }
 
     async deployMetadata() {
@@ -196,20 +277,28 @@ export default class MetadataManager extends LightningElement {
             }
 
             if (tokenResponse === 'Valid') {
+<<<<<<< HEAD
                 let jobId = await retrieveMetadataItem({
                     componentNamesMap: this.selectedMetadataTypes,
                     sourceOrg: this.selectedSource,
                     targetOrg: this.selectedTarget
                 });
+=======
+                await retrieveMetadataItem({ componentNamesMap: this.selectedMetadataTypes, sourceOrg: this.selectedSource, targetOrg: this.selectedTarget });
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
                 this.showToast('Success', 'Metadata deployed successfully', 'success');
             } else {
                 const result = await this.pollDeploymentStatus(tokenResponse);
                 if (result.success) {
+<<<<<<< HEAD
                     let jobId = await retrieveMetadataItem({
                         componentNamesMap: this.selectedMetadataTypes,
                         sourceOrg: this.selectedSource,
                         targetOrg: this.selectedTarget
                     });
+=======
+                    await retrieveMetadataItem({ componentNamesMap: this.selectedMetadataTypes, sourceOrg: this.selectedSource, targetOrg: this.selectedTarget });
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
                     this.showToast('Success', 'Metadata deployed successfully', 'success');
                 } else {
                     this.showToast('Deployment Failed', 'Deployment job failed', 'error');
@@ -221,6 +310,7 @@ export default class MetadataManager extends LightningElement {
             this.isLoading = false;
         }
     }
+<<<<<<< HEAD
 
     async pollDeploymentStatus(deploymentId, intervalMs = 5000) {
         while (true) {
@@ -229,4 +319,6 @@ export default class MetadataManager extends LightningElement {
             await new Promise(res => setTimeout(res, intervalMs));
         }
     }
+=======
+>>>>>>> 4877a59d47307c5b70c9c3dcee9acd8d65080122
 }

@@ -71,25 +71,24 @@ public with sharing class MetadataDeploymentHandler {
         }
         List<MetadataFileInfo> fileInfoList = new List<MetadataFileInfo>();
         for(MetadataService.FileProperties fileProperty : service.listMetadata(queries, MetadataService.apiVersion)){
-            fileInfoList.add(
-                new MetadataFileInfo(
-                    fileProperty.createdByName,
-                    fileProperty.fullName,
-                    fileProperty.fileName,
-                    fileProperty.lastModifiedByName,
-                    fileProperty.type_x
-                )
-            );
+            System.debug('createdById => ' + fileProperty.createdById);
+            System.debug('createdByName => ' + fileProperty.createdByName);
+            System.debug('createdDate => ' + fileProperty.createdDate);
+            System.debug('fileName => ' + fileProperty.fileName);
+            System.debug('fullName => ' + fileProperty.fullName);
+            System.debug('id => ' + fileProperty.id);
+            System.debug('lastModifiedById => ' + fileProperty.lastModifiedById);
+            System.debug('lastModifiedByName => ' + fileProperty.lastModifiedByName);
+            System.debug('lastModifiedDate => ' + fileProperty.lastModifiedDate);
+            System.debug('manageableState => ' + fileProperty.manageableState);
+            System.debug('namespacePrefix => ' + fileProperty.namespacePrefix);
+            System.debug('type_x => ' + fileProperty.type_x);
+            System.debug('--------------------------------------');
         }
-        return fileInfoList;
     }
 
-    @AuraEnabled
-    public static String retrieveMetadataItem(Map<String, List<String>> componentNamesMap, String sourceOrg, String targetOrg) {
-        Salesforce_Authorization__mdt sourceOrgMdt = [SELECT Id, MasterLabel, DeveloperName, Access_Token__c, Expire_Time__c, Client_Id__c, Client_Secret__c, Base_URL__c FROM Salesforce_Authorization__mdt WHERE Id =: sourceOrg LIMIT 1];
-        String accessToken = sourceOrgMdt.Access_Token__c;
-        String baseUrl = sourceOrgMdt.Base_URL__c;
-        MetadataService.MetadataPort service = createService(baseUrl, accessToken);
+    public static void retrieveMetadataItem(Map<String, List<String>> componentNamesMap) {
+        MetadataService.MetadataPort service = createService();	
         MetadataService.RetrieveRequest retrieveRequest = new MetadataService.RetrieveRequest();
         retrieveRequest.apiVersion = MetadataService.apiVersion;
         retrieveRequest.packageNames = null;
@@ -115,10 +114,10 @@ public with sharing class MetadataDeploymentHandler {
                 While(System.now() < start.addseconds(10)){}        
             }
         }
-        return deployMetadata(retrieveResult.zipFile, targetOrg);
+        deployMetadata(retrieveResult.zipFile);
     }
 
-    public static String deployMetadata(String zipFileData, String targetOrg)
+    public static void deployMetadata(String zipFileData)
 	{
         Salesforce_Authorization__mdt sourceOrgMdt = [SELECT Id, MasterLabel, DeveloperName, Access_Token__c, Expire_Time__c, Client_Id__c, Client_Secret__c, Base_URL__c FROM Salesforce_Authorization__mdt WHERE Id =: targetOrg LIMIT 1];
         String accessToken = sourceOrgMdt.Access_Token__c;
