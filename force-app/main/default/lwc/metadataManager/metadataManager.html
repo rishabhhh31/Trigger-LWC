@@ -1,0 +1,56 @@
+<template>
+    <lightning-card title="Salesforce Metadata Manager">
+        <lightning-spinner if:true={isLoading} size="medium"></lightning-spinner>
+
+        <!-- Step 1: Org Selection -->
+        <template if:true={isStep1}>
+            <lightning-layout horizontal-align="spread">
+                <lightning-layout-item size="6" padding="around-small">
+                    <lightning-combobox label="Source Org" value={selectedSource} options={sourceOrgs}
+                        placeholder="Select source org" onchange={handleOrgChange} name="source">
+                    </lightning-combobox>
+                </lightning-layout-item>
+                <lightning-layout-item size="6" padding="around-small">
+                    <lightning-combobox label="Target Org" value={selectedTarget} options={targetOrgs}
+                        placeholder="Select target org" onchange={handleOrgChange} name="target"
+                        disabled={isTargetOrgDisabled}>
+                    </lightning-combobox>
+                </lightning-layout-item>
+            </lightning-layout>
+        </template>
+
+        <!-- Step 2: Metadata Type Selection -->
+        <template if:true={isStep2}>
+            <lightning-dual-listbox class="slds-m-around_small" name="metadata" label="Select Metadata Types"
+                source-label="Available" selected-label="Selected" field-level-help="Select one or more metadata types"
+                options={metadataOptions} value={selectedMetadata} onchange={handleMetadataChange}>
+            </lightning-dual-listbox>
+            <lightning-button variant="brand" label="Fetch Metadata" onclick={handleFetchMetadata}
+                disabled={shouldFetchMetadata} class="slds-m-around_small"></lightning-button>
+        </template>
+
+        <!-- Step 3: Metadata Files -->
+        <template if:true={isStep3}>
+
+            <template if:true={isMetadataFilesAvailable}>
+                <div style="height: 250px;">
+                    <lightning-datatable data={fetchedFiles} columns={columns} key-field="fullName"
+                        onrowselection={handleRowSelection}>
+                    </lightning-datatable>
+                </div>
+                <div class="slds-m-around_small">
+                    <lightning-button disabled={isFileSelectedForDeployment} variant="brand" label="Deploy Metadata"
+                        onclick={deployMetadata}></lightning-button>
+                </div>
+            </template>
+        </template>
+
+        <!-- Navigation Buttons -->
+        <div class="slds-m-around_small">
+            <lightning-button label="Previous" onclick={handlePrevious}
+                disabled={isPreviousDisabled}></lightning-button>
+            <lightning-button variant="brand" label="Next" onclick={handleNext} disabled={isNextDisabled}
+                class="slds-m-left_small"></lightning-button>
+        </div>
+    </lightning-card>
+</template>

@@ -1,13 +1,31 @@
 public with sharing class MetadataDeploymentHandler {
-    public static MetadataService.MetadataPort createService() {
+    public static MetadataService.MetadataPort createService(String baseUrl, String accessToken) {
         MetadataService.MetadataPort service = new MetadataService.MetadataPort();
         service.SessionHeader = new MetadataService.SessionHeader_element();
-        service.SessionHeader.sessionId = UserInfo.getSessionId();
+        service.endpoint_x = baseUrl + '/services/Soap/m/'+MetadataService.apiVersion;
+        service.SessionHeader.sessionId = accessToken;
         return service;
     }
 
-    public static void getOrgWideMetadataTypeNames() {
-        MetadataService.MetadataPort service = createService();
+    public class MetadataOption {
+        @AuraEnabled public String label { get; set; }
+        @AuraEnabled public String value { get; set; }
+
+        public MetadataOption(String name) {
+            this.label = name;
+            this.value = name;
+        }
+    }
+
+    @AuraEnabled
+    public static List<MetadataOption> getOrgWideMetadataTypeNames(String sourceOrg) {
+        Salesforce_Authorization__mdt sourceOrgMdt = [SELECT Id, MasterLabel, DeveloperName, Access_Token__c, Expire_Time__c, Client_Id__c, Client_Secret__c, Base_URL__c FROM Salesforce_Authorization__mdt WHERE Id =: sourceOrg LIMIT 1];
+        String accessToken = sourceOrgMdt.Access_Token__c;
+        String baseUrl = sourceOrgMdt.Base_URL__c;
+        if(sourceOrgMdt.Expire_Time__c == null || sourceOrgMdt.Expire_Time__c < System.now()){
+            // accessToken = AuthService.handleClientCredentialsFlow(sourceOrgMdt.MasterLabel, sourceOrgMdt.DeveloperName, sourceOrgMdt.Base_URL__c, sourceOrgMdt.Client_Secret__c, sourceOrgMdt.Client_Id__c);
+        }
+        MetadataService.MetadataPort service = createService(baseUrl, accessToken);
         MetadataService.DescribeMetadataResult describeResult = service.describeMetadata(MetadataService.apiVersion);
         Set<String> uniqueMetadataTypeNames = new Set<String>();
         for(MetadataService.DescribeMetadataObject metadataObject : describeResult.metadataObjects) {
@@ -18,35 +36,60 @@ public with sharing class MetadataDeploymentHandler {
         }
         List<String> metadataTypeNames = new List<String>(uniqueMetadataTypeNames);
         metadataTypeNames.sort();
+        List<MetadataOption> formattedList = new List<MetadataOption>();
+        for (String name : metadataTypeNames) {
+            formattedList.add(new MetadataOption(name));
+        }
+        return formattedList;
     }
 
-    public static void listMetadata(List<String> metadataComponents) {
-        MetadataService.MetadataPort service = createService();
+    public class MetadataFileInfo {
+        @AuraEnabled public String createdByName { get; set; }
+        @AuraEnabled public String fullName { get; set; }
+        @AuraEnabled public String lastModifiedByName { get; set; }
+        @AuraEnabled public String type { get; set; }
+
+        public MetadataFileInfo(String createdByName, String fullName, String fileName, String lastModifiedByName, String typeName) {
+            this.createdByName = createdByName;
+            this.fullName = fullName;
+            this.lastModifiedByName = lastModifiedByName;
+            this.type = typeName;
+        }
+    }
+
+    @AuraEnabled
+    public static List<MetadataFileInfo> listMetadata(List<String> metadataComponents, String sourceOrg) {
+        Salesforce_Authorization__mdt sourceOrgMdt = [SELECT Id, MasterLabel, DeveloperName, Access_Token__c, Expire_Time__c, Client_Id__c, Client_Secret__c, Base_URL__c FROM Salesforce_Authorization__mdt WHERE Id =: sourceOrg LIMIT 1];
+        String accessToken = sourceOrgMdt.Access_Token__c;
+        String baseUrl = sourceOrgMdt.Base_URL__c;
+        MetadataService.MetadataPort service = createService(baseUrl, accessToken);
         List<MetadataService.ListMetadataQuery> queries = new List<MetadataService.ListMetadataQuery>();
         for(String metadataComponent : metadataComponents){
             MetadataService.ListMetadataQuery query = new MetadataService.ListMetadataQuery();
             query.type_x = metadataComponent;
             queries.add(query);
         }
+        List<MetadataFileInfo> fileInfoList = new List<MetadataFileInfo>();
         for(MetadataService.FileProperties fileProperty : service.listMetadata(queries, MetadataService.apiVersion)){
-            System.debug('createdById => ' + fileProperty.createdById);
-            System.debug('createdByName => ' + fileProperty.createdByName);
-            System.debug('createdDate => ' + fileProperty.createdDate);
-            System.debug('fileName => ' + fileProperty.fileName);
-            System.debug('fullName => ' + fileProperty.fullName);
-            System.debug('id => ' + fileProperty.id);
-            System.debug('lastModifiedById => ' + fileProperty.lastModifiedById);
-            System.debug('lastModifiedByName => ' + fileProperty.lastModifiedByName);
-            System.debug('lastModifiedDate => ' + fileProperty.lastModifiedDate);
-            System.debug('manageableState => ' + fileProperty.manageableState);
-            System.debug('namespacePrefix => ' + fileProperty.namespacePrefix);
-            System.debug('type_x => ' + fileProperty.type_x);
-            System.debug('--------------------------------------');
+            fileInfoList.add(
+                new MetadataFileInfo(
+                    fileProperty.createdByName,
+                    fileProperty.fullName,
+                    fileProperty.fileName,
+                    fileProperty.lastModifiedByName,
+                    fileProperty.type_x
+                )
+            );
         }
+        return fileInfoList;
     }
 
-    public static void retrieveMetadataItem(Map<String, List<String>> componentNamesMap) {
-        MetadataService.MetadataPort service = createService();	
+    @AuraEnabled
+    public static String retrieveMetadataItem(Map<String, List<String>> componentNamesMap, String sourceOrg, String targetOrg) {
+        Salesforce_Authorization__mdt sourceOrgMdt = [SELECT Id, MasterLabel, DeveloperName, Access_Token__c, Expire_Time__c, Client_Id__c, Client_Secret__c, Base_URL__c FROM Salesforce_Authorization__mdt WHERE Id =: sourceOrg LIMIT 1];
+        String accessToken = sourceOrgMdt.Access_Token__c;
+        String baseUrl = sourceOrgMdt.Base_URL__c;
+        MetadataService.MetadataPort service = createService(baseUrl, accessToken);
         MetadataService.RetrieveRequest retrieveRequest = new MetadataService.RetrieveRequest();
         retrieveRequest.apiVersion = MetadataService.apiVersion;
         retrieveRequest.packageNames = null;
@@ -72,12 +115,15 @@ public with sharing class MetadataDeploymentHandler {
                 While(System.now() < start.addseconds(10)){}        
             }
         }
-        deployMetadata(retrieveResult.zipFile);
+        return deployMetadata(retrieveResult.zipFile, targetOrg);
     }
 
-    public static void deployMetadata(String zipFileData)
+    public static String deployMetadata(String zipFileData, String targetOrg)
 	{
-		MetadataService.MetadataPort service = createService();
+        Salesforce_Authorization__mdt sourceOrgMdt = [SELECT Id, MasterLabel, DeveloperName, Access_Token__c, Expire_Time__c, Client_Id__c, Client_Secret__c, Base_URL__c FROM Salesforce_Authorization__mdt WHERE Id =: targetOrg LIMIT 1];
+        String accessToken = sourceOrgMdt.Access_Token__c;
+        String baseUrl = sourceOrgMdt.Base_URL__c;
+        MetadataService.MetadataPort service = createService(baseUrl, accessToken);
 		MetadataService.DeployOptions deployOptions = new MetadataService.DeployOptions();
         deployOptions.allowMissingFiles = false;
         deployOptions.autoUpdatePackage = false;
@@ -89,21 +135,12 @@ public with sharing class MetadataDeploymentHandler {
         deployOptions.testLevel = 'NoTestRun';
         deployOptions.singlePackage = true;		
 		MetadataService.AsyncResult asyncResult = service.deploy(zipFileData, deployOptions);
-        // MetadataService.DeployResult deployResult;
-        // boolean done = false;
-        // while (!done) {
-        //     deployResult = service.checkDeployStatus(asyncResult.Id, true);
-        //     if (deployResult.done) {		
-        //         done = true;
-        //     } else {
-        //         datetime start = System.now();
-        //         While(System.now() < start.addseconds(10)){}        
-        //     }
-        // }
+        return asyncResult.id;
 	}
 
     public static void createExternalAuthProvider(String label, String fullName, String endpoint) {
-        MetadataService.MetadataPort service = createService();
+        MetadataService.MetadataPort service = createService(null, null);
+        service.endpoint_x = '';
 
         // Create the External Auth Identity Provider
         MetadataService.ExternalAuthIdentityProvider authProvider = new MetadataService.ExternalAuthIdentityProvider();
@@ -148,7 +185,7 @@ public with sharing class MetadataDeploymentHandler {
     }
 
     public static void createExternalCredentials(String label, String fullName, String endpoint) {
-        MetadataService.MetadataPort service = createService();
+        MetadataService.MetadataPort service = createService(null, null);
 
         // Create External Credential
         MetadataService.ExternalCredential externalCredential = new MetadataService.ExternalCredential();
@@ -194,7 +231,7 @@ public with sharing class MetadataDeploymentHandler {
     }
 
     public static void createNamedCredential(String label, String fullName, String endpoint) {
-        MetadataService.MetadataPort service = createService();
+        MetadataService.MetadataPort service = createService(null, null);
         // Create Named Credential
         MetadataService.NamedCredential namedCredential = new MetadataService.NamedCredential();
         namedCredential.fullName = fullName;
@@ -233,6 +270,33 @@ public with sharing class MetadataDeploymentHandler {
         }
 
         System.debug('Named Credential created successfully: ' + fullName);
+    }
+
+    @AuraEnabled
+    public static List<SalesforceMetadataWrapper> getSalesforceAuthorizationOrgs(){
+        try {
+            List<SalesforceMetadataWrapper> wrapperList = new List<SalesforceMetadataWrapper>();
+            for(Salesforce_Authorization__mdt auth : [SELECT Id, Base_URL__c, MasterLabel, DeveloperName, Client_Id__c, Client_Secret__c FROM Salesforce_Authorization__mdt ORDER BY SystemModstamp DESC]){
+                wrapperList.add(new SalesforceMetadataWrapper(auth.Base_URL__c, auth.MasterLabel, auth.Id));
+            }
+            return wrapperList;
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
+    public class SalesforceMetadataWrapper {
+        @AuraEnabled public String label;
+        @AuraEnabled public String value;
+
+        public SalesforceMetadataWrapper(
+            String baseUrl,
+            String metadataName,
+            String metadataTypeId
+        ) {
+            this.label = metadataName + ' (' + baseUrl + ')';
+            this.value = metadataTypeId;
+        }
     }
 
     // Custom exception class
