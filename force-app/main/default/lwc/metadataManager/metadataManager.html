@@ -1,0 +1,30 @@
+<template>
+    <lightning-card>
+        <lightning-layout horizontal-align="space">
+            <lightning-layout-item flexibility="auto" size="5" padding="around-small">
+                <lightning-combobox name="source" label="Source Org" value={selectedSource}
+                    placeholder="select source org" options={sourceOrgs} onchange={handleOrgChange}>
+                </lightning-combobox>
+            </lightning-layout-item>
+            <lightning-layout-item flexibility="auto" size="5" padding="around-small">
+                <lightning-combobox name="target" label="Target Org" value={selectedTarget}
+                    placeholder="select target org" options={targetOrgs} disabled={isTargetOrgDisabled}
+                    onchange={handleOrgChange}>
+                </lightning-combobox>
+            </lightning-layout-item>
+        </lightning-layout>
+
+        <lightning-button label="Next" onclick={handleNext}></lightning-button>
+        <!-- Metadata Multi-Select -->
+        <lightning-dual-listbox lwc:if={isMetadataTypeAvailable} name="metadata" label="Select Metadata Types"
+            source-label="Available" selected-label="Selected" field-level-help="Select one or more metadata types"
+            options={metadataOptions} value={selectedMetadata} onchange={handleMetadataChange}>
+        </lightning-dual-listbox>
+        <lightning-button disabled={shouldFetchMetadata} variant="brand" label="Fetch Metadata"
+            onclick={handleFetchMetadata}></lightning-button>
+        <lightning-datatable onrowselection={handleRowSelection} key-field="fullName" data={fetchedFiles}
+            columns={columns}>
+        </lightning-datatable>
+        <lightning-button variant="brand" label="Deploy" onclick={deployMetadata}></lightning-button>
+    </lightning-card>
+</template>
