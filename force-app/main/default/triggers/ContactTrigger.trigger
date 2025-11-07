@@ -13,10 +13,10 @@ trigger ContactTrigger on Contact (before insert, before update, after insert, a
     
     if(Trigger.isBefore){
         if(Trigger.isInsert){
-            ContactTriggerHandler.duplicateContactEmailCheck(Trigger.new, null);
+            //ContactTriggerHandler.duplicateContactEmailCheck(Trigger.new, null);
         }
         if(Trigger.isUpdate){
-            ContactTriggerHandler.duplicateContactEmailCheck(Trigger.new, Trigger.oldMap);
+            //ContactTriggerHandler.duplicateContactEmailCheck(Trigger.new, Trigger.oldMap);
         }
     }
 }

@@ -1,0 +1,20 @@
+.slds-card {
+    max-width: 700px;
+    margin: auto;
+}
+
+/* Make the record form scrollable with a fixed height */
+.form-container {
+    max-height: 300px;
+    /* You can adjust this value as needed */
+    overflow: auto;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    background-color: #ffffff;
+}
+
+/* Optional: full-width combobox */
+lightning-combobox {
+    width: 100%;
+}
