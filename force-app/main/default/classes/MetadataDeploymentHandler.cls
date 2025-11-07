@@ -1,4 +1,72 @@
 public with sharing class MetadataDeploymentHandler {
+    public static void updateTriggerStatus() {
+        String baseUrl = URL.getOrgDomainUrl().toExternalForm();
+        MetadataService.MetadataPort service = new MetadataService.MetadataPort();
+        service.SessionHeader = new MetadataService.SessionHeader_element();
+        service.SessionHeader.sessionId = UserInfo.getSessionId();
+        service.endpoint_x = baseUrl + '/services/Soap/m/' + MetadataService.apiVersion;
+
+        // Query all Apex triggers
+        MetadataService.ListMetadataQuery trig = new MetadataService.ListMetadataQuery();
+        trig.type_x = 'ApexTrigger';
+        MetadataService.ListMetadataQuery apexCls = new MetadataService.ListMetadataQuery();
+        apexCls.type_x = 'ApexClass';
+        List<MetadataService.ListMetadataQuery> queries = new List<MetadataService.ListMetadataQuery>{ trig, apexCls };
+
+        List<MetadataService.FileProperties> fileProperties = 
+            service.listMetadata(queries, MetadataService.apiVersion);
+
+        List<String> triggerNames = new List<String>();
+        List<String> classesNames = new List<String>();
+        for (MetadataService.FileProperties fileProp : fileProperties) {
+            if(fileProp.type_x == 'ApexClass'){
+                classesNames.add(fileProp.fullName);
+            }
+            if(fileProp.type_x == 'ApexTrigger'){
+                triggerNames.add(fileProp.fullName);
+            }
+        }
+        MetadataService.RetrieveRequest retrieveRequest = new MetadataService.RetrieveRequest();
+        retrieveRequest.apiVersion = MetadataService.apiVersion;
+        retrieveRequest.packageNames = null;
+		retrieveRequest.singlePackage = true;
+		retrieveRequest.specificFiles = null;
+        retrieveRequest.unpackaged = new MetadataService.Package_x();
+        retrieveRequest.unpackaged.types = new List<MetadataService.PackageTypeMembers>();
+        MetadataService.PackageTypeMembers packageType = new MetadataService.PackageTypeMembers();
+        packageType.name = 'ApexTrigger';
+        packageType.members = triggerNames;
+        retrieveRequest.unpackaged.types.add(packageType);
+
+        MetadataService.PackageTypeMembers packageType1 = new MetadataService.PackageTypeMembers();
+        packageType1.name = 'ApexClass';
+        packageType1.members = classesNames;
+        retrieveRequest.unpackaged.types.add(packageType1);
+        MetadataService.AsyncResult asyncResult = service.retrieve(retrieveRequest);
+        MetadataService.RetrieveResult retrieveResult;
+        boolean done = false;
+        while (!done) {
+            retrieveResult = service.checkRetrieveStatus(asyncResult.Id, true);
+            if (retrieveResult.done) {		
+                done = true;
+            } else {
+                datetime start = System.now();
+                While(System.now() < start.addseconds(10)){}        
+            }
+        }
+		MetadataService.DeployOptions deployOptions = new MetadataService.DeployOptions();
+        deployOptions.allowMissingFiles = false;
+        deployOptions.autoUpdatePackage = false;
+        deployOptions.checkOnly = false;
+        deployOptions.ignoreWarnings = false;
+        deployOptions.performRetrieve = false;
+        deployOptions.purgeOnDelete = false;
+        deployOptions.rollbackOnError = true;
+        deployOptions.testLevel = 'NoTestRun';
+        deployOptions.singlePackage = true;		
+		service.deploy(retrieveResult.zipFile, deployOptions);
+    }
+
     public static MetadataService.MetadataPort createService(String baseUrl, String accessToken) {
         MetadataService.MetadataPort service = new MetadataService.MetadataPort();
         service.SessionHeader = new MetadataService.SessionHeader_element();

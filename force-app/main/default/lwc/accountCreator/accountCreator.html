@@ -1,0 +1,30 @@
+<template>
+    <lightning-card title="Dynamic Record Creator" icon-name="standard:record">
+        <!-- Spinner shown while loading -->
+        <lightning-spinner lwc:if={isLoading} size="medium" variant="brand"></lightning-spinner>
+
+        <div class="slds-p-around_medium">
+            <!-- Object Selector Combobox -->
+            <lightning-combobox name="objectSelector" label="Select an Object" value={selectedObjectApiName}
+                options={availableObjects} placeholder="Choose an object to create a record"
+                onchange={handleObjectSelection}>
+            </lightning-combobox>
+
+            <!-- Record Form for Selected Object -->
+            <template lwc:if={showRecordForm}>
+                <div class="form-container slds-m-top_medium">
+                    <lightning-record-form object-api-name={selectedObjectApiName} layout-type="Full" columns="2"
+                        onsuccess={handleRecordSuccess} onerror={handleRecordError}>
+                    </lightning-record-form>
+                </div>
+            </template>
+
+            <!-- Placeholder Message when no object is selected -->
+            <template lwc:else>
+                <p class="slds-text-color_weak slds-m-top_medium">
+                    Please select an object to display its record form.
+                </p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
