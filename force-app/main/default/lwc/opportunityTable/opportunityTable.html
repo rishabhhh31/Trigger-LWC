@@ -1,0 +1,20 @@
+<template>
+    <lightning-card title="Opportunity Data Table" icon-name="standard:opportunity">
+        <div class="slds-m-around_medium">
+            <template if:true={opportunities.data}>
+                <lightning-datatable hide-checkbox-column="true" key-field="Id" data={displayedOpportunities}
+                    columns={columns} onsort={handleSort} sorted-by={sortBy} sorted-direction={sortDirection}>
+                </lightning-datatable>
+                <div class="slds-grid slds-grid_align-spread slds-m-top_small">
+                    <lightning-button label="Previous" onclick={handlePrevious} disabled={isFirstPage}>
+                    </lightning-button>
+                    <span> Page {currentPage} of {totalPages}</span>
+                    <lightning-button label="Next" onclick={handleNext} disabled={isLastPage}></lightning-button>
+                </div>
+            </template>
+            <template if:true={opportunities.error}>
+                <p>Error loading opportunities: {opportunities.error.message}</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
