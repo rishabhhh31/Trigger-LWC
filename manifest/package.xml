@@ -10,11 +10,24 @@
 	</types>
 	<types>
 		<members>Account.Account_Auto_Number__c</members>
+		<members>Account.Active_Market_Places__c</members>
+		<members>Account.Active__c</members>
+		<members>Account.CustomerPriority__c</members>
+		<members>Account.Number_of_contacts__c</members>
+		<members>Account.NumberofLocations__c</members>
+		<members>Account.Priority__c</members>
+		<members>Account.SLAExpirationDate__c</members>
+		<members>Account.SLASerialNumber__c</members>
+		<members>Account.SLA__c</members>
+		<members>Account.Tier__c</members>
+		<members>Account.Total_Budget__c</members>
+		<members>Account.Total_Opportunity__c</members>
+		<members>Account.UpsellOpportunity__c</members>
 		<name>CustomField</name>
 	</types>
 	<types>
-		<members>Account-Account Layout</members>
-		<name>Layout</name>
+		<members>Account</members>
+		<name>CustomObject</name>
 	</types>
 	<types>
 		<members>Admin</members>
