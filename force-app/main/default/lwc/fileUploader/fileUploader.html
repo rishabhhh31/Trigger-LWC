@@ -1,0 +1,41 @@
+<template>
+    <lightning-card title="Uploaded File Details" icon-name="doctype:attachment">
+        <div class="slds-p-around_medium">
+
+            <!-- File Uploader Component -->
+            <lightning-file-upload label="Attach File" name="fileUploader" accept={acceptedFormats} record-id={recordId}
+                onuploadfinished={handleUploadFinished}>
+            </lightning-file-upload>
+
+            <!-- File Distribution Details -->
+            <template if:true={contentDistributions}>
+                <div class="slds-m-top_medium">
+                    <template for:each={contentDistributions} for:item="distribution">
+                        <div key={distribution.publicUrl}
+                            class="slds-box slds-box_x-small slds-m-bottom_small slds-grid slds-wrap file-card">
+
+                            <!-- File Info Section -->
+                            <div class="slds-col slds-size_2-of-3">
+                                <p class="file-name">{uploadedFileName}</p>
+                                <a href={distribution.publicUrl} target="_blank" class="file-link">Open Shared File</a>
+                                <p class="expiry-text">Expires: {distribution.expireTime}</p>
+                            </div>
+
+                            <!-- Password Section with Copy Feature -->
+                            <div class="slds-col slds-size_1-of-3 slds-text-right password-section">
+                                <lightning-input type="password" label="Password" value={distribution.password}
+                                    class="password-box" readonly>
+                                </lightning-input>
+
+                                <lightning-button-icon data-password={distribution.password} icon-name="utility:copy"
+                                    alternative-text="Copy Password" class="slds-m-top_small copy-icon"
+                                    onclick={copyPassword}>
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
