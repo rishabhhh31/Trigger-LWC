@@ -1,0 +1,33 @@
+<template>
+    <lightning-card title="Sales Data Chart" icon-name="standard:chart">
+        <div class="slds-m-around_medium">
+
+            <div class="slds-grid slds-grid_align-center slds-m-bottom_small">
+                <lightning-button-group>
+
+                    <lightning-button label="Bar Chart" onclick={showBarChart} variant={barButtonVariant}>
+                    </lightning-button>
+
+                    <lightning-button label="Line Chart" onclick={showLineChart} variant={lineButtonVariant}>
+                    </lightning-button>
+
+                    <lightning-button label="Pie Chart" onclick={showPieChart} variant={pieButtonVariant}>
+                    </lightning-button>
+
+                </lightning-button-group>
+            </div>
+
+            <div class="chart-container">
+                <canvas lwc:dom="manual" class="salesChart"></canvas>
+            </div>
+
+            <template if:true={selectedDataPoint}>
+                <div class="slds-m-top_medium slds-text-align_center">
+                    <h3>Chart Details</h3>
+                    <p>Selected: {selectedDataPoint.label} - {selectedDataPoint.value}</p>
+                </div>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>
