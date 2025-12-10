@@ -1,5 +1,140 @@
 public with sharing class OpportunityTriggerHandler {
 
+    public static void addRolesForClosedWon(List<Opportunity> newList, Map<Id, Opportunity> oldMap, Boolean isUpdate) {
+        
+        // Get Opportunities that are converted to Closed Won
+        Map<Id, Opportunity> oppsToProcess = getClosedWonOpps(newList, oldMap, isUpdate);
+
+        // Exit early if no Opportunity meets criteria
+        if (oppsToProcess.isEmpty()) {
+            return;
+        }
+
+        // Fetch all Contacts related to the Opportunity Accounts
+        Map<Id, List<Contact>> contactsByAccount = getContactsByAccount(oppsToProcess);
+
+        // Fetch existing OCRs to prevent duplicate records
+        Map<Id, Set<Id>> existingRoles = getExistingOCRs(oppsToProcess.keySet());
+
+        // Create new OCR records
+        List<OpportunityContactRole> ocrToInsert = createOCRs(oppsToProcess, contactsByAccount, existingRoles);
+
+        // Insert OCRs with partial success enabled
+        if (!ocrToInsert.isEmpty()) {
+            /*
+            Note: If you prefer strict behavior, use 'insert ocrToInsert;' instead.
+            */
+            Database.insert(ocrToInsert, false);
+        }
+    }
+
+
+    // Filter Opportunities that converted to Closed Won
+    private static Map<Id, Opportunity> getClosedWonOpps(List<Opportunity> newList, Map<Id, Opportunity> oldMap, Boolean isUpdate ) {
+        Map<Id, Opportunity> result = new Map<Id, Opportunity>();
+
+        for (Opportunity opp : newList) {
+            Opportunity oldOpp = isUpdate ? oldMap.get(opp.Id) : null;
+
+            Boolean nowClosedWon = (opp.IsClosed && opp.IsWon);  // current opportunity
+            Boolean wasClosedWon = (oldOpp != null && oldOpp.IsClosed && oldOpp.IsWon); // previous opportunity
+
+            // Add only newly Closed Won Opportunities with an Account
+            if (nowClosedWon && !wasClosedWon && opp.AccountId != null) {
+                result.put(opp.Id, opp);
+            }
+        }
+        return result;
+    }
+
+
+    // Query Contacts belonging to all involved Accounts
+    private static Map<Id, List<Contact>> getContactsByAccount(Map<Id, Opportunity> opps) {
+        Set<Id> accountIds = new Set<Id>();
+
+        // Collect account Ids
+        for (Opportunity opp : opps.values()) {
+            accountIds.add(opp.AccountId);
+        }
+
+        Map<Id, List<Contact>> contactsByAccount = new Map<Id, List<Contact>>();
+
+        // Query all Contacts under those Accounts
+        for (Contact con : [
+            SELECT Id, AccountId
+            FROM Contact
+            WHERE AccountId IN :accountIds
+        ]) {
+            // Group contacts by Account Id
+            if (!contactsByAccount.containsKey(con.AccountId)) {
+                contactsByAccount.put(con.AccountId, new List<Contact>());
+            }
+            contactsByAccount.get(con.AccountId).add(con);
+        }
+
+        return contactsByAccount;
+    }
+
+
+    // Query existing OpportunityContactRoles
+    private static Map<Id, Set<Id>> getExistingOCRs(Set<Id> oppIds) {
+        Map<Id, Set<Id>> existing = new Map<Id, Set<Id>>();
+
+        for (OpportunityContactRole ocr : [
+            SELECT OpportunityId, ContactId
+            FROM OpportunityContactRole
+            WHERE OpportunityId IN :oppIds
+        ]) {
+            // Add OCRs grouped by OpportunityId
+            if (!existing.containsKey(ocr.OpportunityId)) {
+                existing.put(ocr.OpportunityId, new Set<Id>());
+            }
+            existing.get(ocr.OpportunityId).add(ocr.ContactId);
+        }
+
+        return existing;
+    }
+
+
+    // Create new OCR records, skipping duplicates
+    private static List<OpportunityContactRole> createOCRs(
+        Map<Id, Opportunity> opps,
+        Map<Id, List<Contact>> contactsByAccount,
+        Map<Id, Set<Id>> existingRoles
+    ) {
+        List<OpportunityContactRole> ocrToInsert = new List<OpportunityContactRole>();
+
+        for (Id oppId : opps.keySet()) {
+            Opportunity opp = opps.get(oppId);
+            List<Contact> contacts = contactsByAccount.get(opp.AccountId);
+
+            // Skip if no related Contacts
+            if (contacts == null || contacts.isEmpty()) {
+                continue;
+            }
+
+            for (Contact con : contacts) {
+
+                // Skip if OCR already exists for this (Opp, Contact)
+                if (existingRoles.containsKey(oppId) &&
+                    existingRoles.get(oppId).contains(con.Id)) {
+                    continue;
+                }
+
+                // Create new OCR record
+                ocrToInsert.add(new OpportunityContactRole(
+                    OpportunityId = oppId,
+                    ContactId = con.Id,
+                    Role = 'Family Member',
+                    IsPrimary = false
+                ));
+            }
+        }
+
+        return ocrToInsert;
+    }
+
+
     /**
     * @description
     * Performs multiple business validations on Opportunity records before insert or update.
