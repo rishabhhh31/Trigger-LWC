@@ -1,0 +1,26 @@
+<template>
+    <lightning-card title="Bulk API 2.0 Insert Demo">
+        <div class="slds-p-around_medium">
+
+            <lightning-button label="Start Bulk Insert" onclick={handleInsert} variant="brand">
+            </lightning-button>
+
+            <template if:true={jobId}>
+                <p class="slds-m-top_medium">
+                    <strong>Job Id:</strong> {jobId}
+                </p>
+
+                <lightning-button label="Check Status" onclick={handleStatus} class="slds-m-top_small">
+                </lightning-button>
+            </template>
+
+            <template if:true={jobStatus}>
+                <div class="slds-m-top_medium">
+                    <strong>Status Response:</strong>
+                    <pre>{jobStatus}</pre>
+                </div>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>
