@@ -15,7 +15,7 @@ public with sharing class BulkInsertService {
             'object' => 'Account',
             'contentType' => 'CSV',
             'operation' => 'insert',
-            'lineEnding' => 'CRLF'
+            'lineEnding' => 'LF'
         };
 
         req.setBody(JSON.serialize(body));
