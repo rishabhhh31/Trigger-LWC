@@ -1,0 +1,74 @@
+<template>
+    <lightning-card title="Multi-Select User Picker" icon-name="standard:user">
+        <div class="slds-m-around_medium">
+            <div class="slds-form-element">
+                <label class="slds-form-element__label" for="search-input">Select Users</label>
+                <div class="slds-form-element__control">
+                    <div class="slds-combobox_container">
+                        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open"
+                            role="combobox" aria-expanded={showDropdown} aria-haspopup="listbox">
+                            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right">
+                                <lightning-input type="search" id="search-input" value={searchTerm}
+                                    onchange={handleSearch} onfocus={handleSearch} onclick={stopPropagation}
+                                    placeholder="Search users...">
+                                </lightning-input>
+                            </div>
+                            <template if:true={showDropdown}>
+                                <div class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+                                    <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                                        <template for:each={filteredUsers} for:item="user">
+                                            <li key={user.id} class="slds-listbox__item" role="presentation">
+                                                <div data-user-id={user.id} onclick={selectUser}
+                                                    class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta"
+                                                    role="option">
+                                                    <span class="slds-media__figure slds-listbox__option-icon">
+                                                        <lightning-icon icon-name="standard:user"
+                                                            size="small"></lightning-icon>
+                                                    </span>
+                                                    <span class="slds-media__body">
+                                                        <span
+                                                            class="slds-listbox__option-text slds-listbox__option-text_entity">
+                                                            {user.fields.Name.value}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </li>
+                                        </template>
+                                        <template if:false={filteredUsers.length}>
+                                            <li class="slds-listbox__item">
+                                                <div class="slds-media slds-listbox__option">
+                                                    <span class="slds-media__body">No users found.</span>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-m-top_medium">
+                <h3 class="slds-text-heading_small">Selected Users:</h3>
+                <ul class="slds-has-dividers_around-space">
+                    <template for:each={selectedUsers} for:item="user">
+                        <li key={user.Id} class="slds-item">
+                            <div class="slds-grid slds-grid_align-spread">
+                                <div>
+                                    <strong>{user.Name}</strong><br />
+                                    {user.Email}
+                                </div>
+                                <lightning-button-icon icon-name="utility:close" alternative-text="Remove"
+                                    title="Remove" data-user-id={user.Id} onclick={removeUser}>
+                                </lightning-button-icon>
+                            </div>
+                        </li>
+                    </template>
+                    <template if:false={selectedUsers.length}>
+                        <li class="slds-item">No users selected.</li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+    </lightning-card>
+</template>
