@@ -1,0 +1,165 @@
+<template>
+    <lightning-card title="Custom Account Grid" icon-name="standard:account">
+        <div class="slds-m-around_medium">
+
+            <lightning-button 
+                label="Add New Account"
+                onclick={addNewRow}>
+            </lightning-button>
+
+            <p class="slds-m-bottom_medium"></p>
+
+            <!-- Scrollable container -->
+            <div style="max-height: 400px;overflow-y: auto;">
+
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+
+                    <!-- Table Header -->
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th scope="col">
+                                <div class="slds-truncate" title="Account Name">Account Name</div>
+                            </th>
+
+                            <th scope="col">
+                                <div class="slds-truncate" title="Industry">Industry</div>
+                            </th>
+
+                            <th scope="col">
+                                <div class="slds-truncate" title="Type">Type</div>
+                            </th>
+
+                            <th scope="col">
+                                <div class="slds-truncate" title="Phone">Phone</div>
+                            </th>
+
+                            <th scope="col">
+                                <div class="slds-truncate" title="Actions">Actions</div>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <!-- Table Body -->
+                    <tbody>
+                        <template for:each={accounts} for:item="account">
+                            <tr key={account.Id} class={account.rowClass}>
+
+                                <!-- Account Name -->
+                                <td>
+                                    <template if:true={account.isEditing}>
+                                        <lightning-input
+                                            value={account.Name}
+                                            data-id={account.Id}
+                                            data-field="Name"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </template>
+
+                                    <template if:false={account.isEditing}>
+                                        {account.Name}
+                                    </template>
+                                </td>
+
+                                <!-- Industry -->
+                                <td>
+                                    <template if:true={account.isEditing}>
+                                        <lightning-combobox
+                                            value={account.Industry}
+                                            options={industries}
+                                            data-id={account.Id}
+                                            data-field="Industry"
+                                            onchange={handleFieldChange}>
+                                        </lightning-combobox>
+                                    </template>
+
+                                    <template if:false={account.isEditing}>
+                                        {account.Industry}
+                                    </template>
+                                </td>
+
+                                <!-- Type -->
+                                <td>
+                                    <template if:true={account.isEditing}>
+                                        <lightning-combobox
+                                            value={account.Type}
+                                            options={types}
+                                            data-id={account.Id}
+                                            data-field="Type"
+                                            onchange={handleFieldChange}>
+                                        </lightning-combobox>
+                                    </template>
+
+                                    <template if:false={account.isEditing}>
+                                        {account.Type}
+                                    </template>
+                                </td>
+
+                                <!-- Phone -->
+                                <td>
+                                    <template if:true={account.isEditing}>
+                                        <lightning-input
+                                            value={account.Phone}
+                                            data-id={account.Id}
+                                            data-field="Phone"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </template>
+
+                                    <template if:false={account.isEditing}>
+                                        {account.Phone}
+                                    </template>
+                                </td>
+
+                                <!-- Actions -->
+                                <td>
+
+                                    <template if:true={account.isEditing}>
+                                        <lightning-button-icon
+                                            icon-name="utility:save"
+                                            alternative-text="Save"
+                                            title="Save"
+                                            class="slds-m-right_x-small"
+                                            data-id={account.Id}
+                                            onclick={saveRow}>
+                                        </lightning-button-icon>
+
+                                        <lightning-button-icon
+                                            icon-name="utility:close"
+                                            alternative-text="Cancel"
+                                            title="Cancel"
+                                            data-id={account.Id}
+                                            onclick={cancelEdit}>
+                                        </lightning-button-icon>
+                                    </template>
+
+                                    <template if:false={account.isEditing}>
+                                        <lightning-button-icon
+                                            icon-name="utility:edit"
+                                            alternative-text="Edit"
+                                            title="Edit"
+                                            class="slds-m-right_x-small"
+                                            data-id={account.Id}
+                                            onclick={editRow}>
+                                        </lightning-button-icon>
+
+                                        <lightning-button-icon
+                                            icon-name="utility:delete"
+                                            alternative-text="Delete"
+                                            title="Delete"
+                                            data-id={account.Id}
+                                            onclick={deleteRow}>
+                                        </lightning-button-icon>
+                                    </template>
+
+                                </td>
+
+                            </tr>
+                        </template>
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </lightning-card>
+</template>
