@@ -1,169 +1,226 @@
 import { LightningElement, wire, track } from 'lwc';
-import { getListUi } from 'lightning/uiListApi';
+import { getListRecordsByName } from 'lightning/uiListsApi';
 import APPOINTMENT_OBJECT from '@salesforce/schema/Appointment__c';
 import createAppointment from '@salesforce/apex/CustomCalendarController.createAppointment';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { refreshApex } from '@salesforce/apex';
+
+const FIELDS = [
+    'Appointment__c.Subject__c',
+    'Appointment__c.Start_Time__c',
+    'Appointment__c.End_Time__c',
+    'Appointment__c.Description__c'
+];
 
 export default class CustomCalendar extends LightningElement {
 
-    @track currentDate = new Date();
+    currentDate = new Date();
     @track calendarDays = [];
-    @track showModal = false;
-    @track newAppointment = {};
-    @track selectedDate = null;
+    showModal = false;
+    newAppointment = {};
+    selectedDate = null;
 
     weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-    @wire(getListUi, {
-        objectApiName: APPOINTMENT_OBJECT,
-        listViewApiName: 'All'
-    })
-    wiredAppointments;
+    wiredAppointmentsResult;
 
-    get appointmentList() {
-        return this.wiredAppointments.data
-            ? this.wiredAppointments.data.records
-            : [];
+    @wire(getListRecordsByName, {
+        objectApiName: APPOINTMENT_OBJECT.objectApiName,
+        listViewApiName: 'All',
+        fields: FIELDS
+    })
+    wiredAppointmentsInfo(result){
+        this.wiredAppointmentsResult = result;
+
+        if(result.data){
+            this.generateCalendar();
+        }
+        else if(result.error){
+            this.showToast('Error','Unable to load appointments','error');
+        }
     }
 
-    get currentMonthYear() {
-        return this.currentDate.toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric'
+    get appointmentList(){
+        return this.wiredAppointmentsResult?.data?.records || [];
+    }
+
+    get currentMonthYear(){
+        return this.currentDate.toLocaleDateString('en-US',{
+            month:'long',
+            year:'numeric'
         });
     }
 
-    connectedCallback() {
-        this.generateCalendar();
-    }
-
-    generateCalendar() {
+    generateCalendar(){
 
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
 
-        const firstDay = new Date(year, month, 1);
+        const firstDay = new Date(year,month,1);
         const startDate = new Date(firstDay);
 
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
+        startDate.setDate(startDate.getDate()-firstDay.getDay());
 
-        this.calendarDays = [];
+        this.calendarDays=[];
 
-        for (let i = 0; i < 42; i++) {
+        for(let i=0;i<42;i++){
 
             const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
+            date.setDate(startDate.getDate()+i);
 
-            const isCurrentMonth = date.getMonth() === month;
+            const y = date.getFullYear();
+            const m = String(date.getMonth()+1).padStart(2,'0');
+            const d = String(date.getDate()).padStart(2,'0');
+
+            const localDate = `${y}-${m}-${d}`;
+
+            const isCurrentMonth = date.getMonth()===month;
             const isToday = this.isToday(date);
             const hasEvents = this.hasEventsOnDate(date);
 
             this.calendarDays.push({
-                date: date.toISOString().split('T')[0],
+                date: localDate,
                 dayNumber: date.getDate(),
-                cssClass: `day ${isCurrentMonth ? 'current-month':'other-month'} ${isToday ? 'today':''}`,
-                hasEvents: hasEvents
+                cssClass: `day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''} ${localDate === this.selectedDate ? 'selected-day' : ''}`,
+                hasEvents:hasEvents
             });
         }
     }
 
     isToday(date){
-        const today = new Date();
-        return date.toDateString() === today.toDateString();
+        const today=new Date();
+        return date.toDateString()===today.toDateString();
     }
 
     hasEventsOnDate(date){
 
-        const dateStr = date.toISOString().split('T')[0];
+        return this.appointmentList.some(record=>{
 
-        return this.appointmentList.some(appointment =>
-            appointment.fields.Start_Time__c.value.startsWith(dateStr)
-        );
-    }
+            const value = record.fields.Start_Time__c.value;
 
-    previousMonth(){
-        this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-        this.generateCalendar();
-    }
+            if(!value) return false;
 
-    nextMonth(){
-        this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-        this.generateCalendar();
-    }
+            const eventDate = new Date(value);
 
-    selectDate(event){
-
-        this.selectedDate = event.currentTarget.dataset.date;
-        this.showAddModal();
-    }
-
-    showAddModal(){
-
-        this.showModal = true;
-
-        this.newAppointment = {
-
-            Start_Time__c : this.selectedDate || new Date().toISOString().slice(0,16),
-
-            End_Time__c : new Date(
-                Date.now() + 60*60*1000
-            ).toISOString().slice(0,16)
-        };
-    }
-
-    closeModal(){
-        this.showModal = false;
-        this.newAppointment = {};
-        this.selectedDate = null;
-    }
-
-    handleInputChange(event){
-
-        const field = event.target.dataset.field;
-
-        this.newAppointment[field] = event.target.value;
-    }
-
-    saveAppointment(){
-
-        if(!this.newAppointment.Subject__c){
-
-            this.showToast(
-                'Error',
-                'Subject is required',
-                'error'
-            );
-            return;
-        }
-
-        createAppointment({
-            appointmentData : this.newAppointment
-        })
-        .then(()=>{
-
-            this.showToast(
-                'Success',
-                'Appointment created successfully',
-                'success'
-            );
-
-            this.closeModal();
-
-            this.generateCalendar();
-
-        })
-        .catch(error=>{
-
-            this.showToast(
-                'Error',
-                error.body.message,
-                'error'
+            return (
+                eventDate.getFullYear()===date.getFullYear() &&
+                eventDate.getMonth()===date.getMonth() &&
+                eventDate.getDate()===date.getDate()
             );
         });
     }
 
-    showToast(title,message,variant){
+    previousMonth(){
+        this.currentDate = new Date(
+            this.currentDate.setMonth(this.currentDate.getMonth()-1)
+        );
+        this.generateCalendar();
+    }
 
+    nextMonth(){
+        this.currentDate = new Date(
+            this.currentDate.setMonth(this.currentDate.getMonth()+1)
+        );
+        this.generateCalendar();
+    }
+
+    selectDate(event){
+        this.selectedDate = event.currentTarget.dataset.date;
+        this.showAddModal();
+    }
+
+    getLocalISOString(date) {
+
+        const pad = (num) => String(num).padStart(2, '0');
+
+        const year = date.getUTCFullYear();
+        const month = pad(date.getUTCMonth() + 1);
+        const day = pad(date.getUTCDate());
+
+        const hours = pad(date.getUTCHours());
+        const minutes = pad(date.getUTCMinutes());
+        const seconds = pad(date.getUTCSeconds());
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+    }
+
+    showAddModal(){
+
+        const now=new Date();
+
+        let startDateTime;
+        let endDateTime;
+
+        if(this.selectedDate){
+
+            const [year,month,day]=this.selectedDate.split('-');
+
+            const selected=new Date(
+                year,
+                month-1,
+                day,
+                now.getHours(),
+                now.getMinutes()
+            );
+
+            startDateTime=this.getLocalISOString(selected);
+
+            const oneHourLater=new Date(selected.getTime()+3600000);
+
+            endDateTime=this.getLocalISOString(oneHourLater);
+
+        }
+        else{
+
+            const oneHourLater=new Date(now.getTime()+3600000);
+
+            startDateTime=this.getLocalISOString(now);
+            endDateTime=this.getLocalISOString(oneHourLater);
+        }
+
+        this.newAppointment={
+            Start_Time__c:startDateTime,
+            End_Time__c:endDateTime
+        };
+
+        this.showModal=true;
+    }
+
+    closeModal(){
+        this.showModal=false;
+        this.newAppointment={};
+        this.selectedDate=null;
+    }
+
+    handleInputChange(event){
+        const field=event.target.dataset.field;
+        this.newAppointment[field]=event.target.value;
+    }
+
+    saveAppointment(){
+        console.log(JSON.stringify(this.newAppointment));
+        if(!this.newAppointment.Subject__c){
+            this.showToast('Error','Subject is required','error');
+            return;
+        }
+
+        createAppointment({
+            appointmentData:this.newAppointment
+        })
+        .then(()=>{
+            this.showToast('Success','Appointment created','success');
+            return refreshApex(this.wiredAppointmentsResult);
+        })
+        .then(()=>{
+            this.closeModal();
+            this.generateCalendar();
+        })
+        .catch(error=>{
+            this.showToast('Error',error.body.message,'error');
+        });
+    }
+
+    showToast(title,message,variant){
         this.dispatchEvent(
             new ShowToastEvent({
                 title,

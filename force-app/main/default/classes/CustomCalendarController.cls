@@ -4,10 +4,8 @@ public with sharing class CustomCalendarController {
         try{
             Appointment__c appointment = new Appointment__c();
             appointment.Subject__c = (String) appointmentData.get('Subject__c');
-            // appointment.Start_Time__c = (Datetime) appointmentData.get('Start_Time__c');
-            // appointment.End_Time__c = (Datetime) appointmentData.get('End_Time__c');
-            appointment.Start_Time__c = System.now();
-            appointment.End_Time__c = System.now().addHours(4);
+            appointment.Start_Time__c = convertStringToDateTime((String)appointmentData.get('Start_Time__c'));
+            appointment.End_Time__c = convertStringToDateTime((String)appointmentData.get('End_Time__c'));
             appointment.Description__c = (String) appointmentData.get('Description__c');
             insert appointment;
             return appointment.Id;
@@ -17,5 +15,12 @@ public with sharing class CustomCalendarController {
             'Error creating appointment: '+ e.getMessage()
             );
         }
+    }
+
+    public static Datetime convertStringToDateTime(String isoString){
+        Datetime dt = Datetime.valueOfGmt(
+            isoString.replace('T',' ').replace('Z','')
+        );
+        return dt;
     }
 }
