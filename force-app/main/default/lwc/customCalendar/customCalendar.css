@@ -1,0 +1,32 @@
+/* .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.weekday-header {
+    font-weight: bold;
+    text-align: center;
+}
+
+.day {
+    height: 80px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.today {
+    border: 2px solid #0176d3;
+}
+
+.other-month {
+    background: #f4f6f9;
+}
+
+.event-indicator {
+    color: red;
+    font-size: 18px;
+} */
+
+.test{}
