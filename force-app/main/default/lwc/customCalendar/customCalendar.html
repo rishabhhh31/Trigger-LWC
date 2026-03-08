@@ -58,7 +58,6 @@
         <!-- Modal -->
 
         <template if:true={showModal}>
-
             <section
                 role="dialog"
                 tabindex="-1"
@@ -86,8 +85,16 @@
 
                     </header>
 
-                    <div class="slds-modal__content slds-p-around_medium">
-
+                    <div class="slds-modal__content slds-p-around_medium modal-body">
+                        <template if:true={isLoading}>
+                            <div class="modal-spinner">
+                                <lightning-spinner
+                                    alternative-text="Saving"
+                                    size="medium"
+                                    variant="brand">
+                                </lightning-spinner>
+                            </div>
+                        </template>
                         <lightning-input
                             label="Subject"
                             data-field="Subject__c"
@@ -125,13 +132,15 @@
 
                         <lightning-button
                             label="Cancel"
-                            onclick={closeModal}>
+                            onclick={closeModal}
+                            disabled={isLoading}>
                         </lightning-button>
 
                         <lightning-button
                             label="Save"
                             variant="brand"
-                            onclick={saveAppointment}>
+                            onclick={saveAppointment}
+                            disabled={isLoading}>
                         </lightning-button>
 
                     </footer>

@@ -1,4 +1,5 @@
 public with sharing class CustomCalendarController {
+    
     @AuraEnabled
     public static Id createAppointment(Map<String,Object> appointmentData){
         try{
