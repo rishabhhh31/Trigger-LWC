@@ -1,37 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
 	<types>
-		<members>AccountTriggerHandler</members>
+		<members>ProgressTrackerController</members>
 		<name>ApexClass</name>
 	</types>
 	<types>
-		<members>AccountTrigger</members>
-		<name>ApexTrigger</name>
-	</types>
-	<types>
-		<members>Account.Account_Auto_Number__c</members>
-		<members>Account.Active_Market_Places__c</members>
-		<members>Account.Active__c</members>
-		<members>Account.CustomerPriority__c</members>
-		<members>Account.Number_of_contacts__c</members>
-		<members>Account.NumberofLocations__c</members>
-		<members>Account.Priority__c</members>
-		<members>Account.SLAExpirationDate__c</members>
-		<members>Account.SLASerialNumber__c</members>
-		<members>Account.SLA__c</members>
-		<members>Account.Tier__c</members>
-		<members>Account.Total_Budget__c</members>
-		<members>Account.Total_Opportunity__c</members>
-		<members>Account.UpsellOpportunity__c</members>
+		<members>Project__c.End_Date__c</members>
+		<members>Project__c.Progress__c</members>
+		<members>Project__c.Start_Date__c</members>
 		<name>CustomField</name>
 	</types>
 	<types>
-		<members>Account</members>
+		<members>Project__c</members>
 		<name>CustomObject</name>
 	</types>
 	<types>
-		<members>Admin</members>
-		<name>Profile</name>
+		<members>Project__c-Project Layout</members>
+		<name>Layout</name>
 	</types>
-	<version>65.0</version>
+	<types>
+		<members>progressTracker</members>
+		<name>LightningComponentBundle</name>
+	</types>
+	<version>66.0</version>
 </Package>
