@@ -1,0 +1,79 @@
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.weekday-header {
+    text-align: center;
+    font-weight: 700;
+    padding: 8px;
+    background: #f3f6f9;
+    border-radius: 4px;
+}
+
+.day {
+    height: 90px;
+    border: 1px solid #d8dde6;
+    padding: 8px;
+    cursor: pointer;
+    background: white;
+    position: relative;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.day:hover {
+    background: #f4f6f9;
+    transform: scale(1.03);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.current-month {
+    background: white;
+}
+
+.other-month {
+    background: #f8f9fb;
+    opacity: 0.6;
+}
+
+.today {
+    border: 2px solid #0176d3;
+}
+
+.selected-day{
+    background:#e8f4ff;
+    border:2px solid #0176d3;
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.event-indicator {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    background: #0176d3;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.modal-body {
+    position: relative;
+}
+
+.modal-spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+}
