@@ -1,7 +1,7 @@
 <template>
     <lightning-card title="Project Progress Tracker" icon-name="standard:opportunity">
         <div class="slds-m-around_medium">
-            <template if:true={wiredProjects.data}>
+            <template if:true={wiredResult.data}>
                 <template for:each={projects} for:item="project">
                     <div key={project.Id} class="slds-box slds-m-bottom_small">
                         <div class="slds-grid slds-grid_align-spread">
@@ -41,8 +41,8 @@
                 </template>
             </template>
 
-            <template if:true={wiredProjects.error}>
-                <p>Error loading projects: {wiredProjects.error.message}</p>
+            <template if:true={wiredResult.error}>
+                <p>Error loading projects: {wiredResult.error.message}</p>
             </template>
 
         </div>

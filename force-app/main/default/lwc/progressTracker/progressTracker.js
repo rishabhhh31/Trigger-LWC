@@ -5,65 +5,97 @@ import updateProjectProgress from '@salesforce/apex/ProgressTrackerController.up
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+const FIELDS = [
+    'Project__c.Id',
+    'Project__c.Name',
+    'Project__c.Start_Date__c',
+    'Project__c.End_Date__c',
+    'Project__c.Progress__c'
+];
+
 export default class ProgressTracker extends LightningElement {
 
     @track projects = [];
-    @track showUpdateModal = false;
-    @track updateValue = 0;
-    @track selectedProjectId = null;
+    showUpdateModal = false;
+    updateValue = 0;
+    selectedProjectId;
 
-    wiredProjects;
+    wiredResult;
 
     @wire(getListRecordsByName, {
         objectApiName: PROJECT_OBJECT.objectApiName,
         listViewApiName: 'All',
-        fields: ["Project__c.Id", "Project__c.Name", "Project__c.Start_Date__c", "Project__c.End_Date__c", "Project__c.Progress__c"],
-        sortBy: ["Project__c.Name"]
+        fields: FIELDS,
+        sortBy: ['Project__c.Start_Date__c']
     })
-    refreshProjects(result) {
-        this.wiredProjects = result;
+    wiredProjects(result) {
+
+        this.wiredResult = result;
 
         if (result.data) {
-            this.processProjects();
-        }else if(result.error){
-            console.log(result.error);
+            this.projects = this.transformProjects(result.data.records);
         }
+
+        if (result.error) {
+            console.error(result.error);
+        }
+
     }
 
-    get projectList() {
-        return this.wiredProjects.data?.records || [];
-    }
+    transformProjects(records) {
 
-    processProjects() {
-        this.projects = this.projectList.map(project => {
-            const progress = project.fields.Progress__c.value || 0;
+        return records.map(record => {
+
+            const fields = record.fields;
+            const progress = fields.Progress__c?.value ?? 0;
+
             return {
-                Id: project.id,
-                Name: project.fields.Name.value,
+                Id: record.id,
+                Name: fields.Name?.value,
                 Progress__c: progress,
-                startDate: project.fields.Start_Date__c.value ? new Date(project.fields.Start_Date__c.value).toDateString() : '',
-                endDate: project.fields.End_Date__c.value ? new Date(project.fields.End_Date__c.value).toDateString() : '',
-                progressStyle: `width:${progress}%; background-color:${this.getProgressColor(progress)};`
+                startDate: this.formatDate(fields.Start_Date__c?.value),
+                endDate: this.formatDate(fields.End_Date__c?.value),
+                progressStyle: `width:${progress}%; background-color:${this.getProgressColor(progress)}`
             };
+
         });
+
+    }
+
+    formatDate(date) {
+        return date
+            ? new Intl.DateTimeFormat('en-US').format(new Date(date))
+            : '';
     }
 
     getProgressColor(progress) {
-        if (progress >= 80) return '#4bca81';   // Green
-        if (progress >= 60) return '#ffb75d';   // Orange
+
+        if (progress >= 95) return '#2e844a';   // Dark Green (Almost Complete)
+        if (progress >= 85) return '#4bca81';   // Green
+        if (progress >= 70) return '#7fd3a5';   // Light Green
+        if (progress >= 55) return '#ffb75d';   // Orange
         if (progress >= 40) return '#ffd75d';   // Yellow
-        return '#ff6b6b';                       // Red
+        if (progress >= 25) return '#ff9a3c';   // Dark Orange
+        if (progress >= 10) return '#ff7b7b';   // Light Red
+
+        return '#d64545'; // Dark Red (Very Low Progress)
+
     }
 
     updateProgress(event) {
+
         this.selectedProjectId = event.currentTarget.dataset.projectId;
+
         const project = this.projects.find(p => p.Id === this.selectedProjectId);
-        this.updateValue = project.Progress__c;
+
+        this.updateValue = project?.Progress__c ?? 0;
+
         this.showUpdateModal = true;
+
     }
 
     handleUpdateChange(event) {
-        this.updateValue = parseInt(event.target.value, 10);
+        this.updateValue = Number(event.target.value);
     }
 
     closeModal() {
@@ -73,33 +105,43 @@ export default class ProgressTracker extends LightningElement {
     }
 
     saveProgress() {
+
         if (this.updateValue < 0 || this.updateValue > 100) {
             this.showToast('Error', 'Progress must be between 0 and 100', 'error');
             return;
         }
+
         updateProjectProgress({
             projectId: this.selectedProjectId,
             progress: this.updateValue
         })
         .then(() => {
-            this.handleRefresh();
+
             this.showToast('Success', 'Progress updated successfully', 'success');
+
+            return refreshApex(this.wiredResult);
+
+        })
+        .then(() => {
+
+            this.closeModal();
+
         })
         .catch(error => {
-            this.showToast(
-                'Error',
-                error.body.message,
-                'error'
-            );
-        });
-    }
 
-    async handleRefresh() {
-        await refreshApex(this.wiredProjects);
-        this.closeModal();
+            const message =
+                error?.body?.message ||
+                error?.body?.[0]?.message ||
+                'Unknown error';
+
+            this.showToast('Error', message, 'error');
+
+        });
+
     }
 
     showToast(title, message, variant) {
+
         this.dispatchEvent(
             new ShowToastEvent({
                 title,
@@ -107,5 +149,7 @@ export default class ProgressTracker extends LightningElement {
                 variant
             })
         );
+
     }
+
 }
