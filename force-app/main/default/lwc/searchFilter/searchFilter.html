@@ -1,0 +1,82 @@
+<template>
+    <lightning-card title="Search and Filter Records" icon-name="standard:search">
+        <div class="slds-m-around_medium">
+
+            <div class="slds-grid slds-wrap slds-gutters">
+
+                <!-- Search -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="Search by Name"
+                        type="search"
+                        value={searchTerm}
+                        onchange={handleSearch}
+                        class="slds-m-bottom_small">
+                    </lightning-input>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-combobox
+                        label="Filter by Status"
+                        value={statusFilter}
+                        options={statuses}
+                        onchange={handleStatusFilter}
+                        class="slds-m-bottom_small">
+                    </lightning-combobox>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-combobox
+                        label="Filter by Category"
+                        value={priorityFilter}
+                        options={priorities}
+                        onchange={handlePriorityFilter}
+                        class="slds-m-bottom_small">
+                    </lightning-combobox>
+                </div>
+
+                <!-- Date Filter -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        label="Start Date (on or after)"
+                        type="date"
+                        value={startDateFilter}
+                        onchange={handleDateFilter}
+                        class="slds-m-bottom_small">
+                    </lightning-input>
+                </div>
+
+            </div>
+
+            <!-- Result List -->
+            <div class="slds-m-top_medium">
+                <h3 class="slds-text-heading_small">
+                    Found {filteredRecords.length} records
+                </h3>
+
+                <ul class="slds-has-dividers_around-space">
+
+                    <template for:each={filteredRecords} for:item="record">
+                        <li key={record.Id} class="slds-item slds-p-around_small">
+                            <strong>{record.CaseNumber}</strong> - {record.Status}
+                            <p>
+                                Priority: {record.Priority},
+                                Created: {record.CreatedDate}
+                            </p>
+                        </li>
+                    </template>
+
+                    <template if:false={filteredRecords.length}>
+                        <li class="slds-item slds-p-around_small">
+                            No records found matching your criteria.
+                        </li>
+                    </template>
+
+                </ul>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>

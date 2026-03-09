@@ -4,5 +4,7 @@
     "**/bower_components": true,
     "**/.sfdx": true
   },
-  "xml.preferences.showSchemaDocumentationType": "none"
+  "xml.preferences.showSchemaDocumentationType": "none",
+  "salesforcedx-vscode-core.show-cli-success-msg": false,
+  "salesforcedx-vscode-apex.java.home":"C:\\Program Files\\Java\\jdk-21.0.10"
 }
