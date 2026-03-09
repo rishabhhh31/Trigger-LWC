@@ -2,37 +2,19 @@
     <lightning-card title="Notification System" icon-name="standard:notification">
         <div class="slds-m-around_medium">
 
-            <lightning-button
-                label="Show Info"
-                onclick={handleShowNotification}
-                class="slds-m-right_small"
-                data-message="This is an informational message."
-                data-type="info">
-            </lightning-button>
+            <!-- Dynamic Buttons -->
+            <template for:each={buttons} for:item="btn">
+                <lightning-button
+                    key={btn.type}
+                    label={btn.label}
+                    onclick={handleShowNotification}
+                    class="slds-m-right_small"
+                    data-message={btn.message}
+                    data-type={btn.type}>
+                </lightning-button>
+            </template>
 
-            <lightning-button
-                label="Show Success"
-                onclick={handleShowNotification}
-                class="slds-m-right_small"
-                data-message="Operation completed successfully!"
-                data-type="success">
-            </lightning-button>
-
-            <lightning-button
-                label="Show Warning"
-                onclick={handleShowNotification}
-                class="slds-m-right_small"
-                data-message="Warning: Something might be wrong."
-                data-type="warning">
-            </lightning-button>
-
-            <lightning-button
-                label="Show Error"
-                onclick={handleShowNotification}
-                data-message="Error: Failed to complete operation."
-                data-type="error">
-            </lightning-button>
-
+            <!-- Notifications -->
             <div class="notifications-container slds-m-top_medium">
                 <template for:each={notifications} for:item="notification">
                     <div key={notification.id}
@@ -49,10 +31,11 @@
 
                         {notification.message}
 
-                        <button class="slds-button slds-button_icon slds-notify__close slds-button_icon-inverse"
-                                title="Close"
-                                data-notification-id={notification.id}
-                                onclick={dismissNotification}>
+                        <button
+                            class="slds-button slds-button_icon slds-notify__close slds-button_icon-inverse"
+                            title="Close"
+                            data-notification-id={notification.id}
+                            onclick={dismissNotification}>
 
                             <lightning-icon
                                 icon-name="utility:close"
