@@ -2,6 +2,7 @@
     <lightning-card title="Search and Filter Cases" icon-name="standard:case">
         <div class="slds-m-around_medium">
 
+            <!-- Filters -->
             <div class="slds-grid slds-wrap slds-gutters">
 
                 <!-- Search -->
@@ -46,31 +47,69 @@
 
             </div>
 
+            <!-- Record Count -->
             <div class="slds-m-top_medium">
                 <h3 class="slds-text-heading_small">
                     Found {filteredRecords.length} records
                 </h3>
+            </div>
 
-                <ul class="slds-has-dividers_around-space">
+            <!-- Tile Layout -->
+            <div class="slds-grid slds-wrap slds-gutters slds-m-top_small">
 
-                    <template for:each={filteredRecords} for:item="record">
-                        <li key={record.Id} class="slds-item slds-p-around_small">
-                            <strong>{record.CaseNumber}</strong> — {record.Status}
+                <template for:each={filteredRecords} for:item="record">
 
-                            <p>
-                                Priority: {record.Priority} |
-                                Created: {record.CreatedDate}
-                            </p>
-                        </li>
-                    </template>
+                    <div key={record.Id}
+                         class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
 
-                    <template if:false={filteredRecords.length}>
-                        <li class="slds-item slds-p-around_small">
-                            No records found
-                        </li>
-                    </template>
+                        <article class="slds-tile slds-media slds-box slds-m-bottom_small">
 
-                </ul>
+                            <div class="slds-media__figure">
+                                <lightning-icon
+                                    icon-name="standard:case"
+                                    size="small">
+                                </lightning-icon>
+                            </div>
+
+                            <div class="slds-media__body">
+
+                                <h3 class="slds-tile__title slds-truncate">
+                                    <strong>{record.CaseNumber}</strong>
+                                </h3>
+
+                                <div class="slds-tile__detail">
+
+                                    <p>
+                                        <strong>Status:</strong> {record.Status}
+                                    </p>
+
+                                    <p>
+                                        <strong>Priority:</strong> {record.Priority}
+                                    </p>
+
+                                    <p>
+                                        <strong>Created:</strong> {record.CreatedDate}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+                    </div>
+
+                </template>
+
+                <!-- Empty State -->
+                <template if:false={filteredRecords.length}>
+                    <div class="slds-col slds-size_1-of-1">
+                        <div class="slds-box slds-text-align_center slds-m-top_medium">
+                            No records found matching your criteria
+                        </div>
+                    </div>
+                </template>
+
             </div>
 
         </div>
