@@ -1,0 +1,55 @@
+<template>
+    <lightning-card title="Notification System" icon-name="standard:notification">
+        <div class="slds-m-around_medium">
+
+            <!-- Dynamic Buttons -->
+            <template for:each={buttons} for:item="btn">
+                <lightning-button
+                    key={btn.type}
+                    label={btn.label}
+                    onclick={handleShowNotification}
+                    class="slds-m-right_small"
+                    data-message={btn.message}
+                    data-type={btn.type}>
+                </lightning-button>
+            </template>
+
+            <!-- Notifications -->
+            <div class="notifications-container slds-m-top_medium">
+                <template for:each={notifications} for:item="notification">
+                    <div key={notification.id}
+                         class={notification.cssClass}
+                         role="alert">
+
+                        <span class="slds-icon_container slds-m-right_x-small">
+                            <lightning-icon
+                                icon-name={notification.icon}
+                                size="x-small"
+                                variant="inverse">
+                            </lightning-icon>
+                        </span>
+
+                        {notification.message}
+
+                        <button
+                            class="slds-button slds-button_icon slds-notify__close slds-button_icon-inverse"
+                            title="Close"
+                            data-notification-id={notification.id}
+                            onclick={dismissNotification}>
+
+                            <lightning-icon
+                                icon-name="utility:close"
+                                size="x-small"
+                                variant="inverse">
+                            </lightning-icon>
+
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+
+                    </div>
+                </template>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>
