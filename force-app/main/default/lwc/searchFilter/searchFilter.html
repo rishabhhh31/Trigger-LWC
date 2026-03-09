@@ -1,0 +1,117 @@
+<template>
+    <lightning-card title="Search and Filter Cases" icon-name="standard:case">
+        <div class="slds-m-around_medium">
+
+            <!-- Filters -->
+            <div class="slds-grid slds-wrap slds-gutters">
+
+                <!-- Search -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="search"
+                        label="Search by Case Number"
+                        value={searchTerm}
+                        onchange={handleSearch}>
+                    </lightning-input>
+                </div>
+
+                <!-- Status -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-combobox
+                        label="Status"
+                        value={statusFilter}
+                        options={statuses}
+                        onchange={handleStatusFilter}>
+                    </lightning-combobox>
+                </div>
+
+                <!-- Priority -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-combobox
+                        label="Priority"
+                        value={priorityFilter}
+                        options={priorities}
+                        onchange={handlePriorityFilter}>
+                    </lightning-combobox>
+                </div>
+
+                <!-- Date -->
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                    <lightning-input
+                        type="date"
+                        label="Created On or After"
+                        value={startDateFilter}
+                        onchange={handleDateFilter}>
+                    </lightning-input>
+                </div>
+
+            </div>
+
+            <!-- Record Count -->
+            <div class="slds-m-top_medium">
+                <h3 class="slds-text-heading_small">
+                    Found {filteredRecords.length} records
+                </h3>
+            </div>
+
+            <!-- Tile Layout -->
+            <div class="slds-grid slds-wrap slds-gutters slds-m-top_small">
+
+                <template for:each={filteredRecords} for:item="record">
+
+                    <div key={record.Id}
+                         class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+
+                        <article class="slds-tile slds-media slds-box slds-m-bottom_small">
+
+                            <div class="slds-media__figure">
+                                <lightning-icon
+                                    icon-name="standard:case"
+                                    size="small">
+                                </lightning-icon>
+                            </div>
+
+                            <div class="slds-media__body">
+
+                                <h3 class="slds-tile__title slds-truncate">
+                                    <strong>{record.CaseNumber}</strong>
+                                </h3>
+
+                                <div class="slds-tile__detail">
+
+                                    <p>
+                                        <strong>Status:</strong> {record.Status}
+                                    </p>
+
+                                    <p>
+                                        <strong>Priority:</strong> {record.Priority}
+                                    </p>
+
+                                    <p>
+                                        <strong>Created:</strong> {record.CreatedDate}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+                    </div>
+
+                </template>
+
+                <!-- Empty State -->
+                <template if:false={filteredRecords.length}>
+                    <div class="slds-col slds-size_1-of-1">
+                        <div class="slds-box slds-text-align_center slds-m-top_medium">
+                            No records found matching your criteria
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+
+        </div>
+    </lightning-card>
+</template>
