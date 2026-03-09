@@ -1,5 +1,5 @@
 <template>
-    <lightning-card title="Search and Filter Records" icon-name="standard:search">
+    <lightning-card title="Search and Filter Cases" icon-name="standard:case">
         <div class="slds-m-around_medium">
 
             <div class="slds-grid slds-wrap slds-gutters">
@@ -7,50 +7,45 @@
                 <!-- Search -->
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
                     <lightning-input
-                        label="Search by Name"
                         type="search"
+                        label="Search by Case Number"
                         value={searchTerm}
-                        onchange={handleSearch}
-                        class="slds-m-bottom_small">
+                        onchange={handleSearch}>
                     </lightning-input>
                 </div>
 
-                <!-- Status Filter -->
+                <!-- Status -->
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
                     <lightning-combobox
-                        label="Filter by Status"
+                        label="Status"
                         value={statusFilter}
                         options={statuses}
-                        onchange={handleStatusFilter}
-                        class="slds-m-bottom_small">
+                        onchange={handleStatusFilter}>
                     </lightning-combobox>
                 </div>
 
-                <!-- Category Filter -->
+                <!-- Priority -->
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
                     <lightning-combobox
-                        label="Filter by Category"
+                        label="Priority"
                         value={priorityFilter}
                         options={priorities}
-                        onchange={handlePriorityFilter}
-                        class="slds-m-bottom_small">
+                        onchange={handlePriorityFilter}>
                     </lightning-combobox>
                 </div>
 
-                <!-- Date Filter -->
+                <!-- Date -->
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
                     <lightning-input
-                        label="Start Date (on or after)"
                         type="date"
+                        label="Created On or After"
                         value={startDateFilter}
-                        onchange={handleDateFilter}
-                        class="slds-m-bottom_small">
+                        onchange={handleDateFilter}>
                     </lightning-input>
                 </div>
 
             </div>
 
-            <!-- Result List -->
             <div class="slds-m-top_medium">
                 <h3 class="slds-text-heading_small">
                     Found {filteredRecords.length} records
@@ -60,9 +55,10 @@
 
                     <template for:each={filteredRecords} for:item="record">
                         <li key={record.Id} class="slds-item slds-p-around_small">
-                            <strong>{record.CaseNumber}</strong> - {record.Status}
+                            <strong>{record.CaseNumber}</strong> — {record.Status}
+
                             <p>
-                                Priority: {record.Priority},
+                                Priority: {record.Priority} |
                                 Created: {record.CreatedDate}
                             </p>
                         </li>
@@ -70,7 +66,7 @@
 
                     <template if:false={filteredRecords.length}>
                         <li class="slds-item slds-p-around_small">
-                            No records found matching your criteria.
+                            No records found
                         </li>
                     </template>
 
