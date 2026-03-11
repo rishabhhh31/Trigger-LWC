@@ -1,0 +1,29 @@
+<template>
+    <lightning-card title="Advanced Drag & Drop List" icon-name="standard:list_view">
+        <div class="container slds-m-around_medium">
+            <ul class="list">
+                <template for:each={items} for:item="item" for:index="index">
+                    <li
+                        key={item.id}
+                        class="list-item"
+                        draggable="true"
+                        data-index={index}
+                        ondragstart={handleDragStart}
+                        ondragover={handleDragOver}
+                        ondrop={handleDrop}
+                        ondragenter={handleDragEnter}
+                        ondragleave={handleDragLeave}
+                        ondragend={handleDragEnd}
+                    >
+                        <!-- Drag Handle -->
+                        <span class="drag-handle">☰</span>
+                        <!-- Item Text -->
+                        <span class="item-text">
+                            {item.name}
+                        </span>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </lightning-card>
+</template>
