@@ -1,0 +1,45 @@
+.container {
+    max-width: 400px;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #d8dde6;
+    cursor: grab;
+    transition: all 0.2s ease;  
+}
+
+.list-item:hover {
+    background: #f4f6f9;
+}
+
+.drag-handle {
+    margin-right: 10px;
+    font-size: 16px;
+    cursor: grab;
+    color: #706e6b;
+}
+
+.item-text {
+    flex-grow: 1;
+}
+
+.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+.drop-target {
+    border: 2px dashed #0176d3;
+    background: #eef4ff;
+}
