@@ -4,7 +4,12 @@ export default class ParentRender extends LightningElement {
     @track value = 0;
 
     handleValueChange(event) {
-        console.log('Parent received:', event.detail);
-        this.value = event.detail; // updates child again
+        const newValue = event.detail;
+
+        // ✅ Guard: prevent redundant updates
+        if (this.value !== newValue) {
+            console.log('Parent updating:', newValue);
+            this.value = newValue;
+        }
     }
 }
