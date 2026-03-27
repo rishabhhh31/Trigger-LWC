@@ -4,8 +4,8 @@ import USER_OBJECT from '@salesforce/schema/User';
 
 export default class UserMultiSelect extends LightningElement {
 
-    @track selectedUsers = [];
-    @track filteredUsers = [];
+    selectedUsers = [];
+    filteredUsers = [];
     showDropdown = false;
     searchTerm = '';
 

@@ -12,6 +12,7 @@ export default class DragDropList extends LightningElement {
     draggedIndex = null;
 
     handleDragStart(event) {
+        console.log('handleDragStart', event);
         this.draggedIndex = Number(event.currentTarget.dataset.index);
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', this.draggedIndex);
@@ -19,20 +20,24 @@ export default class DragDropList extends LightningElement {
     }
 
     handleDragEnter(event) {
+        console.log('handleDragEnter', event);
         const element = event.currentTarget;
         element.classList.add('drop-target');
     }
 
     handleDragOver(event) {
+        console.log('handleDragOver', event);
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     }
 
     handleDragLeave(event) {
+        console.log('handleDragLeave', event);
         event.currentTarget.classList.remove('drop-target');
     }
 
     handleDrop(event) {
+        console.log('handleDrop', event);
         event.preventDefault();
         const dropIndex = Number(event.currentTarget.dataset.index);
         const draggedIndex = Number(
