@@ -1,0 +1,103 @@
+<template>
+    <lightning-card title="Location Manager" icon-name="standard:location">
+
+        <div class="slds-p-around_medium">
+
+            <!-- MAP -->
+            <lightning-map
+                lwc:if={showMap}
+                map-markers={mapMarkers}
+                markers-title="Saved Locations"
+                selected-marker-value={selectedMarkerId}
+                onmarkerselect={handleMarkerSelect}
+                zoom-level="14">
+            </lightning-map>
+
+            <!-- Header -->
+            <div class="slds-grid slds-grid_align-spread slds-m-top_medium">
+                <h2 class="slds-text-heading_small">Locations</h2>
+
+                <lightning-button 
+                    label="Add Location"
+                    variant="brand"
+                    onclick={openAddLocationModal}>
+                </lightning-button>
+            </div>
+
+            <!-- List -->
+            <template if:true={locationList.length}>
+                <ul class="slds-has-dividers_around-space">
+                    <template for:each={locationList} for:item="loc">
+                        <li key={loc.id} class="slds-item slds-p-around_small">
+
+                            <div class="slds-grid slds-grid_align-spread">
+
+                                <div>
+                                    <p class="slds-text-heading_small">{loc.name}</p>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        {loc.street}, {loc.city}, {loc.state}
+                                    </p>
+                                </div>
+
+                                <lightning-button 
+                                    label="View"
+                                    data-id={loc.id}
+                                    onclick={handleViewLocation}>
+                                </lightning-button>
+
+                            </div>
+
+                        </li>
+                    </template>
+                </ul>
+            </template>
+
+            <template if:false={locationList.length}>
+                <p>No locations added yet.</p>
+            </template>
+
+        </div>
+    </lightning-card>
+
+    <!-- MODAL -->
+    <template if:true={isAddModalOpen}>
+        <section role="dialog" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium">Add Location</h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium">
+
+                    <lightning-input
+                        label="Location Name"
+                        data-field="name"
+                        value={draftLocation.name}
+                        onchange={handleNameChange}>
+                    </lightning-input>
+
+                    <lightning-input-address
+                        address-label="Address"
+                        street-label="Street"
+                        city-label="City"
+                        country-label="Country"
+                        province-label="State"
+                        postal-code-label="Postal Code"
+                        onchange={handleAddressChange}>
+                    </lightning-input-address>
+
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeModal}></lightning-button>
+                    <lightning-button label="Save" variant="brand" onclick={saveLocation}></lightning-button>
+                </footer>
+
+            </div>
+        </section>
+
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+</template>
