@@ -1,71 +1,94 @@
 import { LightningElement, wire, track } from 'lwc';
 import { getListRecordsByName } from 'lightning/uiListsApi';
 import CONTENT_DOCUMENT_OBJECT from '@salesforce/schema/ContentDocument';
-import {NavigationMixin} from 'lightning/navigation'
+import { NavigationMixin } from 'lightning/navigation';
+
 export default class FileDownloader extends NavigationMixin(LightningElement) {
 
-    @track showProgress = false;
-    @track progress = 0;
+    // UI State
+    @track isDownloadModalOpen = false;
+    @track downloadProgress = 0;
 
-    wiredResult;
-    error;
+    // Data
+    wiredDocumentResponse;
+    loadError;
 
+    // Wire Files
     @wire(getListRecordsByName, {
         objectApiName: CONTENT_DOCUMENT_OBJECT.objectApiName,
         listViewApiName: 'OwnedContentDocuments',
-        fields: ["ContentDocument.Title", "ContentDocument.Id", "ContentDocument.ContentSize", "ContentDocument.FileType", "ContentDocument.FileExtension"],
+        fields: [
+            "ContentDocument.Title",
+            "ContentDocument.Id",
+            "ContentDocument.ContentSize",
+            "ContentDocument.FileExtension"
+        ],
         sortBy: ["ContentDocument.Title"]
     })
-    wiredFiles(result) {
-        this.wiredResult = result;
-        if (result.data) {
-            console.log(result.data);
-            this.error = undefined;
-        } else if (result.error) {
-            this.error = result.error;
+    wiredDocuments(response) {
+        this.wiredDocumentResponse = response;
+
+        if (response.data) {
+            this.loadError = undefined;
+        } else if (response.error) {
+            this.loadError = response.error;
         }
     }
 
-    get files() {
-        return this.wiredResult?.data?.records || [];
+    // Getter for UI
+    get documentList() {
+        return this.wiredDocumentResponse?.data?.records || [];
     }
 
-    previewHandler(event){
-        const fileId = event.currentTarget.dataset.fileId;
-        this[NavigationMixin.Navigate]({ 
-            type:'standard__namedPage',
-            attributes:{ 
-                pageName:'filePreview'
+    get downloadProgressLabel() {
+        return `${this.downloadProgress}% Complete`;
+    }
+
+    // Preview
+    handlePreview(event) {
+        const documentId = event.currentTarget.dataset.id;
+
+        this[NavigationMixin.Navigate]({
+            type: 'standard__namedPage',
+            attributes: {
+                pageName: 'filePreview'
             },
-            state:{ 
-                selectedRecordId: fileId
+            state: {
+                selectedRecordId: documentId
             }
-        })
+        });
     }
 
-    downloadFile(event) {
-        const fileId = event.currentTarget.dataset.fileId;
-        this.showProgress = true;
-        this.progress = 0;
-        this.simulateDownload(fileId);
+    // Download Flow
+    handleDownload(event) {
+        const documentId = event.currentTarget.dataset.id;
+
+        this.isDownloadModalOpen = true;
+        this.downloadProgress = 0;
+
+        this.startDownloadSimulation(documentId);
     }
 
-    simulateDownload(fileId) {
-        const interval = setInterval(() => {
-            this.progress += 10;
+    startDownloadSimulation(documentId) {
+        const intervalRef = setInterval(() => {
+            this.downloadProgress += 10;
 
-            if (this.progress >= 100) {
-                clearInterval(interval);
-                this.completeDownload(fileId);
+            if (this.downloadProgress >= 100) {
+                clearInterval(intervalRef);
+                this.finishDownload(documentId);
             }
         }, 200);
     }
 
-    completeDownload(fileId) {
-        this.showProgress = false;
-        this.progress = 0;
+    finishDownload(documentId) {
+        this.isDownloadModalOpen = false;
+        this.downloadProgress = 0;
 
-        // Actual Salesforce file download
-        window.open(`/sfc/servlet.shepherd/document/download/${fileId}`, '_blank');
+        window.open(`/sfc/servlet.shepherd/document/download/${documentId}`, '_blank');
+    }
+
+    closeModal() {
+        this.isDownloadModalOpen = false;
+        this.downloadProgress = 0;
     }
 }
