@@ -1,0 +1,15 @@
+<template>
+    <lightning-card title="Toggle Switch" icon-name="standard:toggle">
+        <div class="slds-m-around_medium slds-text-align_center">
+
+            <span class="slds-text-heading_medium slds-m-right_small">
+                Status: {toggleState ? 'ON' : 'OFF'}
+            </span>
+
+            <div class={toggleClass} onclick={toggleSwitch}>
+                <div class="slider"></div>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>
