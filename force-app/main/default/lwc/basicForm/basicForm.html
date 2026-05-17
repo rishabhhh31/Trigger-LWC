@@ -1,0 +1,33 @@
+<template>
+    <lightning-card title="Basic Form" icon-name="standard:form">
+        <div class="slds-m-around_medium">
+            <lightning-input
+                label="Name"
+                value={userName}
+                onchange={handleNameChange}
+                class="slds-m-bottom_small">
+            </lightning-input>
+
+            <lightning-input
+                label="Email"
+                type="email"
+                value={userEmail}
+                onchange={handleEmailChange}
+                class="slds-m-bottom_small">
+            </lightning-input>
+
+            <lightning-button 
+                label="Submit"
+                onclick={handleSubmit}
+                variant="brand">
+            </lightning-button>
+
+            <template if:true={showResult}>
+                <div class="slds-box slds-m-top_medium">
+                    <p>Name: {userName}</p>
+                    <p>Email: {userEmail}</p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
