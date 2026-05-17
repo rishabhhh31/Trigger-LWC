@@ -1,0 +1,16 @@
+<template>
+    <lightning-card title="Simple List" icon-name="standard:list">
+        <div class="slds-m-around_medium">
+            <ul class="slds-has-dividers_around-space">
+
+                <template for:each={items} for:item="item">
+                    <li key={item.id} class="slds-item slds-p-around_small">
+                        <strong>{item.name}</strong>
+                        <p>{item.description}</p>
+                    </li>
+                </template>
+
+            </ul>
+        </div>
+    </lightning-card>
+</template>
