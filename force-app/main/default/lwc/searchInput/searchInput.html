@@ -1,0 +1,30 @@
+<template>
+    <lightning-card title="Search Input" icon-name="standard:search">
+        <div class="slds-m-around_medium">
+
+            <lightning-input
+                type="search"
+                label="Search Items"
+                value={searchTerm}
+                onchange={handleSearch}
+                class="slds-m-bottom_small">
+            </lightning-input>
+
+            <ul class="slds-has-dividers_around-space">
+
+                <template for:each={filteredItems} for:item="item">
+                    <li key={item.id} class="slds-item slds-p-around_small">
+                        {item.name}
+                    </li>
+                </template>
+
+                <template if:true={showNoData}>
+                    <li class="slds-item slds-p-around_small">
+                        No items found.
+                    </li>
+                </template>
+
+            </ul>
+        </div>
+    </lightning-card>
+</template>
