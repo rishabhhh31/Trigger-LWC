@@ -1,0 +1,22 @@
+<template>
+    <lightning-card title="Simple Counter" icon-name="standard:number_input">
+        <div class="slds-m-around_medium slds-text-align_center">
+            
+            <h1 class="slds-text-heading_large slds-m-bottom_medium">
+                {count}
+            </h1>
+
+            <lightning-button 
+                label="Decrease" 
+                onclick={decrease}
+                class="slds-m-right_small">
+            </lightning-button>
+
+            <lightning-button 
+                label="Increase" 
+                onclick={increase}>
+            </lightning-button>
+
+        </div>
+    </lightning-card>
+</template>
