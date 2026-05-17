@@ -1,0 +1,31 @@
+<template>
+    <lightning-card title="Progress Bar" icon-name="standard:progress_indicator">
+        <div class="slds-m-around_medium">
+
+            <div class="slds-progress-bar slds-progress-bar_large"
+                 role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 aria-valuenow={progress}>
+
+                <span class="slds-progress-bar__value" style={progressStyle}>
+                    <span class="slds-assistive-text">
+                        Progress: {progress}%
+                    </span>
+                </span>
+            </div>
+
+            <div class="slds-text-align_center slds-m-top_x-small">
+                {progress}%
+            </div>
+
+            <div class="slds-m-top_medium slds-text-align_center">
+                <lightning-button 
+                    label="Increase Progress"
+                    onclick={increaseProgress}>
+                </lightning-button>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>
