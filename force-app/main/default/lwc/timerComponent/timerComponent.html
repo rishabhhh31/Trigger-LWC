@@ -1,0 +1,23 @@
+<template>
+    <lightning-card title="Countdown Timer" icon-name="standard:timesheet">
+        <div class="slds-m-around_medium slds-text-align_center">
+
+            <h1 class="slds-text-heading_large slds-m-bottom_medium">
+                {timeLeft}
+            </h1>
+
+            <lightning-button 
+                label="Start Timer"
+                onclick={startTimer}
+                class="slds-m-right_small"
+                disabled={hasTimerStarted}>
+            </lightning-button>
+
+            <lightning-button 
+                label="Reset Timer"
+                onclick={resetTimer}>
+            </lightning-button>
+
+        </div>
+    </lightning-card>
+</template>
