@@ -1,0 +1,28 @@
+<template>
+    <lightning-card title="Button Group" icon-name="standard:button_icon">
+        <div class="slds-m-around_medium slds-text-align_center">
+
+            <lightning-button-group>
+                <lightning-button 
+                    label="Action 1" 
+                    onclick={handleAction1}>
+                </lightning-button>
+
+                <lightning-button 
+                    label="Action 2" 
+                    onclick={handleAction2}>
+                </lightning-button>
+
+                <lightning-button 
+                    label="Action 3" 
+                    onclick={handleAction3}>
+                </lightning-button>
+            </lightning-button-group>
+
+            <p class="slds-m-top_medium">
+                Last Action: {lastAction}
+            </p>
+
+        </div>
+    </lightning-card>
+</template>
