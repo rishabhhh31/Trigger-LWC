@@ -1,0 +1,25 @@
+<template>
+    <lightning-card title="Color Picker" icon-name="standard:color_swatch">
+        <div class="slds-m-around_medium slds-text-align_center">
+
+            <div class="color-palette slds-grid slds-grid_align-center slds-wrap slds-m-bottom_medium">
+                
+                <template for:each={colors} for:item="color">
+                    <div
+                        key={color.name}
+                        class="color-swatch"
+                        style={color.style}
+                        data-color={color.name}
+                        onclick={selectColor}>
+                    </div>
+                </template>
+
+            </div>
+
+            <p class="slds-text-heading_medium">
+                Selected Color: {selectedColor}
+            </p>
+
+        </div>
+    </lightning-card>
+</template>
